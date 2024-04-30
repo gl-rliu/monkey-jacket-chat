@@ -1,1 +1,1 @@
-# genesys-responder
+# genesys-chat
