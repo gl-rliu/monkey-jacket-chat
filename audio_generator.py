@@ -3,7 +3,7 @@ import os
 
 CHUNK_SIZE = 1024  # Size of chunks to read/write at a time
 XI_API_KEY = os.environ["XI_API_KEY"]  # Your API key for authentication
-BYTE_ARRAY = False
+BYTE_ARRAY = True
 
 voices = {"arnold schwartzenegger": "4q1HMIvKfgbjxb0BZsu3",
           "elmer fudd": "7BXee8r6HkvGL1OZIoEb",
