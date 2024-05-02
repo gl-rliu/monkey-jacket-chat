@@ -59,8 +59,12 @@ class KeyValueSerializationSchema(SerializationSchema):
 
 
 def initial_greeting():
-    greeting = character_dialogue.get_initial_greeting("arnold shwartzenegger", "homer simpson")
-    audio = audio_generator.get_response_audio("homer simpson", greeting)
+    t1 = time.time()
+    print('generating initial greeting')
+    greeting = character_dialogue.get_initial_greeting("arnold", "homer")
+    print(time.time() - t1, 'initial greeting generated:', greeting)
+    audio = audio_generator.get_response_audio("homer", greeting)
+    print(time.time() - t1, 'audio generated:', len(audio))
     return audio
 
 
@@ -120,7 +124,7 @@ if __name__ == "__main__":
         .set_delivery_guarantee(DeliveryGuarantee.NONE) \
         .set_property('security.protocol', 'SASL_SSL') \
         .set_property('sasl.mechanism', 'PLAIN') \
-        .set_property('sasl.jaas.config', 'org.apache.kafka.common.security.plain.PlainLoginModule required username="4HGIFGF25GKA3EUF" password="djygRra4hI6ppRda0VHW0tkCjRWeAsAF1/DNT560C1mL7RlJFJGifEp6EOat/otB";') \
+        .set_property('sasl.jaas.config', f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{kafka_user}" password="{kafka_password}";') \
         .set_property('ssl.ca.location', 'ISRG Root X1.crt') \
         .build()
 
