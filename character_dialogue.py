@@ -16,7 +16,7 @@ def get_initial_greeting(actual_character, imposter_character):
 
 def get_caller_name_recognition(actual_character, imposter_character, caller_name):
     system_prompt = f"You are {actual_character} but talk like {imposter_character}"
-    user_prompt = f"how do you say \"OK {caller_name} let's ask the questions!!!\""
+    user_prompt = f"how do you say \"OK {caller_name} ask me some questions!\""
     return get_chat_response(user_prompt, system_prompt)
 
 
@@ -60,6 +60,5 @@ def get_chat_response(user_prompt, system_prompt):
     return completion.choices[0].message.content
 
 
-# test me
 if __name__ == '__main__':
-    print(get_question_response("arnold shwartzenegger", "homer simpson", "are you in movies?"))
+    print(get_returning_greeting("arnold Schwarzenegger", "homer simpson", ""))

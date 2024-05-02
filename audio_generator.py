@@ -69,7 +69,7 @@ def get_response_audio(voice_character, response_text):
         print(response.text)
 
 
-def get_greeting_audio(voice_character, greeting_text):
+def get_greeting_audio(voice_character):
     cached_file = cached_greeting_audio[voice_character]
     if cached_file:
         try:
@@ -82,12 +82,10 @@ def get_greeting_audio(voice_character, greeting_text):
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
-    else:
-        return get_response_audio(voice_character, greeting_text)
 
 
 if __name__ == '__main__':
     text = ("Mmm, doughnuts... Oh, hey! Welcome to Mystery Talker. Here's the deal: You get to ask me 20 questions, "
             "anything you want, and try to guess who I am. I’ll be doing the same, but I gotta record your voice to "
             "make a voice print. If that freaks you out, better hang up now! So, what’s your name, buddy?")
-    print(f"{len(get_greeting_audio('homer simpson', text))} bytes were produced")
+    print(f"{len(get_greeting_audio('homer simpson'))} bytes were produced")
