@@ -3,12 +3,12 @@ import os
 import time
 
 from pyflink.common import WatermarkStrategy
-from pyflink.common.serialization import DeserializationSchema, SerializationSchema, SimpleStringSchema
+from pyflink.common.serialization import DeserializationSchema, SerializationSchema
 from pyflink.common.typeinfo import Types
-from pyflink.datastream import StreamExecutionEnvironment, WindowFunction
+from pyflink.datastream import StreamExecutionEnvironment
 from pyflink.datastream.connectors import DeliveryGuarantee
 from pyflink.datastream.connectors.kafka import KafkaSource, \
-    KafkaSink, KafkaRecordSerializationSchema, KafkaOffsetsInitializer, KafkaTopicSelector
+    KafkaSink, KafkaRecordSerializationSchema, KafkaOffsetsInitializer
 from pyflink.java_gateway import get_gateway
 
 import character_dialogue

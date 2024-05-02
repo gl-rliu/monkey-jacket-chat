@@ -2,12 +2,12 @@ from openai import OpenAI
 
 client = OpenAI()
 
-model = 'gpt-4-turbo'
+model = 'gpt-3.5-turbo'
 
 
 def get_initial_greeting(actual_character, imposter_character):
     system_prompt = f"You are {actual_character} but talk like {imposter_character}"
-    user_prompt = ("how do you say \"Welcome to Mystery Talker. You will ask me 20 questions, whatever you want and "
+    user_prompt = ("say \"Welcome to Mystery Talker. You will ask me 20 questions, whatever you want and "
                    "you will guess who I am. I will do the same but I will need to record your voice and create your "
                    "voice print. If you don't want me to hang up now!!!! OK since it is your first name calling, "
                    "what is your name?\"")
