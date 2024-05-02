@@ -23,17 +23,22 @@ get_question_response("arnold shwartzenegger", "homer simpson", "are you in movi
 ## ElevenLabs text-to-speech
 ### audio generator usage
 
-get_response_audio("arnold", "Who is your daddy and what does he do?")
+#### Greetings
+get_greeting_audio("homer simpson", "d'oh!  You had better bring doughnuts next time.")
+- returns byte[] of mu-law PCM encoded audio
+
+#### Regular chat responses
+get_response_audio("arnold schwartzenegger", "Who is your daddy and what does he do?")
 - returns byte[] of mu-law PCM encoded audio
 
 ### Available characters
-- arnold
-- elmer
-- piggy
-- scarlett
-- crash
+- arnold schwartzenegger
+- elmer fudd
+- miss piggy
+- scarlett johansson
+- crash the turtle
 - yoda
-- freeman
-- mario
-- hussain
-- homer
+- morgan freeman
+- super mario
+- hussain jaber
+- homer simpson
