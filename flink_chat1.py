@@ -58,14 +58,15 @@ class KeyValueSerializationSchema(SerializationSchema):
         return (key.encode('utf-8'), val.encode('utf-8'))
 
 
-def initial_greeting():
+def initial_greeting(conversation_id):
     t1 = time.time()
-    print('generating initial greeting')
-    greeting = character_dialogue.get_initial_greeting("arnold sc   hwartzenegger", "homer simpson")
+    print(0.0, 'received call, generating initial greeting')
+    greeting = character_dialogue.get_initial_greeting("arnold schwartzenegger", "homer simpson")
     print(time.time() - t1, 'initial greeting generated:', greeting)
     audio = audio_generator.get_response_audio("homer simpson", greeting)
     print(time.time() - t1, 'audio generated:', len(audio))
-    return audio
+    key = json.dumps({'conversationId': conversation_id})
+    return key, audio
 
 
 if __name__ == "__main__":
@@ -115,6 +116,7 @@ if __name__ == "__main__":
 
     byte_array_kafka_serialization_schema = KafkaRecordSerializationSchema.builder() \
         .set_topic(output_topic) \
+        .set_key_serialization_schema(KeyValueSerializationSchema(j_serialization_schema=j_json_serialization_schema)) \
         .set_value_serialization_schema(BytesSerializationSchema(j_serialization_schema=j_byte_array_serialization_schema)) \
         .build()
 
@@ -136,7 +138,8 @@ if __name__ == "__main__":
     ds \
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['type'] == 'open') \
         .key_by(lambda message: json.loads(message['key'].decode('utf-8'))['conversationId'], Types.STRING()) \
-        .map(lambda message: initial_greeting(), output_type=Types.PRIMITIVE_ARRAY(Types.BYTE())) \
+        .map(lambda message: initial_greeting(json.loads(message['key'].decode('utf-8'))['conversationId']),
+             output_type=Types.TUPLE([Types.STRING(), Types.PRIMITIVE_ARRAY(Types.BYTE())])) \
         .sink_to(kafka_sink)
 
     print('starting Flink job')
