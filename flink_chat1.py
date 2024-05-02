@@ -1,25 +1,15 @@
-import audioop
-import hashlib
 import json
 import os
 import time
-import wave
-import logging
 
 from pyflink.common import WatermarkStrategy
 from pyflink.common.serialization import DeserializationSchema, SerializationSchema, SimpleStringSchema
-from pyflink.common.time import Time
 from pyflink.common.typeinfo import Types
 from pyflink.datastream import StreamExecutionEnvironment, WindowFunction
 from pyflink.datastream.connectors import DeliveryGuarantee
 from pyflink.datastream.connectors.kafka import KafkaSource, \
     KafkaSink, KafkaRecordSerializationSchema, KafkaOffsetsInitializer, KafkaTopicSelector
-from pyflink.datastream.formats.json import JsonRowSerializationSchema
-from pyflink.datastream.functions import AllWindowFunction
-from pyflink.datastream.window import SlidingProcessingTimeWindows, EventTimeSessionWindows, TumblingEventTimeWindows, \
-    ProcessingTimeSessionWindows
 from pyflink.java_gateway import get_gateway
-from pyflink.common import Row
 
 import character_dialogue
 import audio_generator
@@ -61,11 +51,13 @@ class KeyValueSerializationSchema(SerializationSchema):
 def initial_greeting(conversation_id):
     t1 = time.time()
     print(0.0, 'received call, generating initial greeting')
-    greeting = character_dialogue.get_initial_greeting("arnold schwartzenegger", "homer simpson")
+    # greeting = character_dialogue.get_initial_greeting("arnold schwartzenegger", "homer simpson")
+    greeting = 'test'
     print(time.time() - t1, 'initial greeting generated:', greeting)
     audio = audio_generator.get_response_audio("homer simpson", greeting)
+    # audio = bytearray([1, 2, 3])
     print(time.time() - t1, 'audio generated:', len(audio))
-    key = json.dumps({'conversationId': conversation_id})
+    key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
     return key, audio
 
 
@@ -114,15 +106,15 @@ if __name__ == "__main__":
         .set_property('ssl.ca.location', 'ISRG Root X1.crt') \
         .build()
 
-    byte_array_kafka_serialization_schema = KafkaRecordSerializationSchema.builder() \
+    key_value_kafka_serialization_schema = KafkaRecordSerializationSchema.builder() \
         .set_topic(output_topic) \
-        .set_key_serialization_schema(KeyValueSerializationSchema(j_serialization_schema=j_json_serialization_schema)) \
+        .set_key_serialization_schema(BytesSerializationSchema(j_serialization_schema=j_byte_array_serialization_schema)) \
         .set_value_serialization_schema(BytesSerializationSchema(j_serialization_schema=j_byte_array_serialization_schema)) \
         .build()
 
     kafka_sink = KafkaSink.builder() \
         .set_bootstrap_servers(bootstrap_servers) \
-        .set_record_serializer(byte_array_kafka_serialization_schema) \
+        .set_record_serializer(key_value_kafka_serialization_schema) \
         .set_delivery_guarantee(DeliveryGuarantee.NONE) \
         .set_property('security.protocol', 'SASL_SSL') \
         .set_property('sasl.mechanism', 'PLAIN') \
@@ -138,8 +130,7 @@ if __name__ == "__main__":
     ds \
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['type'] == 'open') \
         .key_by(lambda message: json.loads(message['key'].decode('utf-8'))['conversationId'], Types.STRING()) \
-        .map(lambda message: initial_greeting(json.loads(message['key'].decode('utf-8'))['conversationId']),
-             output_type=Types.TUPLE([Types.STRING(), Types.PRIMITIVE_ARRAY(Types.BYTE())])) \
+        .map(lambda message: initial_greeting(json.loads(message['key'].decode('utf-8'))['conversationId'])) \
         .sink_to(kafka_sink)
 
     print('starting Flink job')
