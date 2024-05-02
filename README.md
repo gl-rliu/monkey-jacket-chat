@@ -1,5 +1,11 @@
 # genesys-chat
 
+## Run
+
+    cd ~/GoodLabs/genesys-chat
+    source venv/bin/activate
+    python3 flink_chat1.py
+
 
 #### Add API Key to environment
 - export OPENAI_API_KEY='openai api_key'

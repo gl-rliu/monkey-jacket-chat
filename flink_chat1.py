@@ -79,7 +79,9 @@ if __name__ == "__main__":
     # env.add_jars(f"file://{home_dir}/.m2/repository/org/apache/kafka/kafka-clients/3.3.1/kafka-clients-3.3.1.jar")
     working_dir = os.getcwd()
     # env.add_jars(f"file://{home_path}/GoodLabs/GMM_voiceID/java/target/gmm-flink-java-1.0-SNAPSHOT.jar")
-    env.add_jars(f"file://{working_dir}/java/target/gmm-flink-java-1.0-SNAPSHOT.jar")
+    jar_path = f"file://{working_dir}/java/target/gmm-flink-java-1.0-SNAPSHOT.jar"
+    env.add_jars(jar_path)
+    print(f'added jar {jar_path}')
 
     gate_way = get_gateway()
     j_char_set = gate_way.jvm.java.nio.charset.Charset.forName('UTF-8')
@@ -92,6 +94,9 @@ if __name__ == "__main__":
     j_json_serialization_schema = gate_way \
         .jvm.org.apache.flink.formats.json.JsonSerializationSchema()
 
+    kafka_user = os.environ["KAFKA_GENESYS_CHAT_USER"]
+    kafka_password = os.environ["KAFKA_GENESYS_CHAT_PASSWORD"]
+
     kafka_source = KafkaSource.builder() \
         .set_bootstrap_servers(bootstrap_servers) \
         .set_topics(conversations_topic) \
@@ -100,7 +105,7 @@ if __name__ == "__main__":
         .set_deserializer(BinaryDeserializationSchema(j_deserialization_schema=j_byte_array_deserialization_schema)) \
         .set_property('security.protocol', 'SASL_SSL') \
         .set_property('sasl.mechanism', 'PLAIN') \
-        .set_property('sasl.jaas.config', 'org.apache.kafka.common.security.plain.PlainLoginModule required username="4HGIFGF25GKA3EUF" password="djygRra4hI6ppRda0VHW0tkCjRWeAsAF1/DNT560C1mL7RlJFJGifEp6EOat/otB";') \
+        .set_property('sasl.jaas.config', f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{kafka_user}" password="{kafka_password}";') \
         .set_property('ssl.ca.location', 'ISRG Root X1.crt') \
         .build()
 
