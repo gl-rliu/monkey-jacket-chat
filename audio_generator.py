@@ -16,23 +16,10 @@ voices = {"arnold schwartzenegger": "4q1HMIvKfgbjxb0BZsu3",
           "hussain jaber": "ul8JnhojCgF8iA2WgCjz",
           "homer simpson": "vWgQedHHDqGUvqr7A08O"}
 
-cached_audio = {"homer simpson": "audio/greeting-arnold_as_homer.wav"}
+cached_greeting_audio = {"homer simpson": "audio/greeting-arnold_as_homer.wav"}
 
 
 def get_response_audio(voice_character, response_text):
-    cached_file = cached_audio[voice_character]
-    if cached_file:
-        try:
-            with open(cached_file, 'rb') as file:
-                byte_array = bytearray(file.read())
-                return byte_array
-        except FileNotFoundError:
-            print(f"File '{cached_file}' not found.")
-            return None
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return None
-
     voice_id = voices[voice_character]
     # Construct the URL for the Text-to-Speech API request
     tts_url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
@@ -82,8 +69,25 @@ def get_response_audio(voice_character, response_text):
         print(response.text)
 
 
+def get_greeting_audio(voice_character, greeting_text):
+    cached_file = cached_greeting_audio[voice_character]
+    if cached_file:
+        try:
+            with open(cached_file, 'rb') as file:
+                byte_array = bytearray(file.read())
+                return byte_array
+        except FileNotFoundError:
+            print(f"File '{cached_file}' not found.")
+            return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+    else:
+        return get_response_audio(voice_character, greeting_text)
+
+
 if __name__ == '__main__':
     text = ("Mmm, doughnuts... Oh, hey! Welcome to Mystery Talker. Here's the deal: You get to ask me 20 questions, "
             "anything you want, and try to guess who I am. I’ll be doing the same, but I gotta record your voice to "
             "make a voice print. If that freaks you out, better hang up now! So, what’s your name, buddy?")
-    print(f"{len(get_response_audio("homer simpson", text))} bytes were produced")
+    print(f"{len(get_greeting_audio("homer simpson", text))} bytes were produced")
