@@ -3,20 +3,36 @@ import os
 
 CHUNK_SIZE = 1024  # Size of chunks to read/write at a time
 XI_API_KEY = os.environ["XI_API_KEY"]  # Your API key for authentication
+BYTE_ARRAY = False
 
-voices = {"arnold": "4q1HMIvKfgbjxb0BZsu3",
-          "elmer": "7BXee8r6HkvGL1OZIoEb",
-          "piggy": "I6hJhvdUjFywlRS2sHr1",
-          "scarlett": "LJwyTpb1P1Y0YgmwA1cU",
-          "crash": "O2Jg7hvavg2CM92Adt5T",
+voices = {"arnold schwartzenegger": "4q1HMIvKfgbjxb0BZsu3",
+          "elmer fudd": "7BXee8r6HkvGL1OZIoEb",
+          "miss piggy": "I6hJhvdUjFywlRS2sHr1",
+          "scarlett johansson": "LJwyTpb1P1Y0YgmwA1cU",
+          "crash the turtle": "O2Jg7hvavg2CM92Adt5T",
           "yoda": "OPPPrIAzqxpRo0z4bVUt",
-          "freeman": "cKjPC0QFrO0D9852wMzs",
-          "mario": "lXteNbvxCHpyDoNeWC0b",
-          "hussain": "ul8JnhojCgF8iA2WgCjz",
-          "homer": "vWgQedHHDqGUvqr7A08O"}
+          "morgan freeman": "cKjPC0QFrO0D9852wMzs",
+          "super mario": "lXteNbvxCHpyDoNeWC0b",
+          "hussain jaber": "ul8JnhojCgF8iA2WgCjz",
+          "homer simpson": "vWgQedHHDqGUvqr7A08O"}
+
+cached_audio = {"homer simpson": "audio/greeting-arnold_as_homer.wav"}
 
 
 def get_response_audio(voice_character, response_text):
+    cached_file = cached_audio[voice_character]
+    if cached_file:
+        try:
+            with open(cached_file, 'rb') as file:
+                byte_array = bytearray(file.read())
+                return byte_array
+        except FileNotFoundError:
+            print(f"File '{cached_file}' not found.")
+            return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+
     voice_id = voices[voice_character]
     # Construct the URL for the Text-to-Speech API request
     tts_url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
@@ -47,13 +63,27 @@ def get_response_audio(voice_character, response_text):
 
     # Check if the request was successful
     if response.ok:
-        byte_array = bytearray()
-        # Read the response in chunks and write to the file
-        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-            if chunk:  # Filter out keep-alive new chunks
-                byte_array.extend(chunk)
+        if BYTE_ARRAY:
+            byte_array = bytearray()
+            # Read the response in chunks and write to the file
+            for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                if chunk:  # Filter out keep-alive new chunks
+                    byte_array.extend(chunk)
 
-        return byte_array
+            return byte_array
+        else:
+            with open('audio/greeting-arnold_as_homer.wav', 'wb') as file:  # Open a file in binary write mode
+                # Iterate over the response content in chunks and write to the file
+                for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                    if chunk:  # Filter out keep-alive new chunks
+                        file.write(chunk)
     else:
         # Print the error message if the request was not successful
         print(response.text)
+
+
+if __name__ == '__main__':
+    text = ("Mmm, doughnuts... Oh, hey! Welcome to Mystery Talker. Here's the deal: You get to ask me 20 questions, "
+            "anything you want, and try to guess who I am. I’ll be doing the same, but I gotta record your voice to "
+            "make a voice print. If that freaks you out, better hang up now! So, what’s your name, buddy?")
+    print(f"{len(get_response_audio("homer simpson", text))} bytes were produced")

@@ -61,9 +61,9 @@ class KeyValueSerializationSchema(SerializationSchema):
 def initial_greeting():
     t1 = time.time()
     print('generating initial greeting')
-    greeting = character_dialogue.get_initial_greeting("arnold", "homer")
+    greeting = character_dialogue.get_initial_greeting("arnold sc   hwartzenegger", "homer simpson")
     print(time.time() - t1, 'initial greeting generated:', greeting)
-    audio = audio_generator.get_response_audio("homer", greeting)
+    audio = audio_generator.get_response_audio("homer simpson", greeting)
     print(time.time() - t1, 'audio generated:', len(audio))
     return audio
 
