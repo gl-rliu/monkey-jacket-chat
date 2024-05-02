@@ -51,11 +51,9 @@ class KeyValueSerializationSchema(SerializationSchema):
 def initial_greeting(conversation_id):
     t1 = time.time()
     print(0.0, 'received call, generating initial greeting')
-    # greeting = character_dialogue.get_initial_greeting("arnold schwartzenegger", "homer simpson")
-    greeting = 'test'
+    greeting = character_dialogue.get_initial_greeting("arnold schwartzenegger", "homer simpson")
     print(time.time() - t1, 'initial greeting generated:', greeting)
     audio = audio_generator.get_response_audio("homer simpson", greeting)
-    # audio = bytearray([1, 2, 3])
     print(time.time() - t1, 'audio generated:', len(audio))
     key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
     return key, audio
