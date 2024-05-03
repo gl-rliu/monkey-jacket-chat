@@ -15,7 +15,7 @@ caller_question_count = 5
 character_reveal_stage = caller_question_count + 1
 character_question_count = 5
 caller_reveal_stage = character_reveal_stage + character_question_count
-confidence_threshold = 0.80
+confidence_threshold = 75.0
 
 
 def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes, text: str
