@@ -49,7 +49,7 @@ class KeyValueSerializationSchema(SerializationSchema):
 
 def initial_greeting(caller_id, conversation_id):
     t1 = time.time()
-    print(0.0, 'received call, generating initial greeting')
+    print(f"0.000s received call {conversation_id} from {caller_id}: generating initial greeting")
     # {"text": greeting_text, "audio": bytes}
     greeting = conversation_manager.get_initial_greeting(caller_id, conversation_id)
     print(f"{time.time() - t1}s initial greeting and audio generated: {greeting['text']}, {len(greeting['audio']) if greeting['audio'] else 0} bytes")
@@ -60,11 +60,16 @@ def initial_greeting(caller_id, conversation_id):
 
 def next_response(caller_id, conversation_id, request_phrase):
     t1 = time.time()
-    print(f"0.0s received phrase, generating response: {request_phrase}")
+    print(f"0.0s conversation {conversation_id} received phrase from {caller_id}, generating response for: {request_phrase}")
     response = conversation_manager.get_response(caller_id, conversation_id, request_phrase)
     print(f"{time.time() - t1}s response generated: {response['text']}, {len(response['audio']) if response['audio'] else 0} bytes")
     key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
     return key, response['audio']
+
+
+def update_confidence_score(caller_id, conversation_id, confidence_score):
+    print(f"Updating confidence score of conversation {conversation_id} with caller {caller_id}: {confidence_score}")
+    conversation_manager.update_confidence_score(caller_id, conversation_id, confidence_score)
 
 
 if __name__ == "__main__":
@@ -151,7 +156,8 @@ if __name__ == "__main__":
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['type'] == 'open') \
         .key_by(lambda message: json.loads(message['key'].decode('utf-8'))['conversationId'], Types.STRING()) \
         .map(lambda message: initial_greeting(
-            json.loads(message['key'].decode('utf-8'))['callerId'], json.loads(message['key'].decode('utf-8'))['conversationId'])) \
+            json.loads(message['key'].decode('utf-8'))['callerId'],
+            json.loads(message['key'].decode('utf-8'))['conversationId'])) \
         .sink_to(kafka_sink)
 
     # conversations: transcription
@@ -161,7 +167,9 @@ if __name__ == "__main__":
         .filter(lambda message: message['value'].decode('utf-8') and len(message['value'].decode('utf-8')) > 0) \
         .key_by(lambda message: json.loads(message['key'].decode('utf-8'))['conversationId'], Types.STRING()) \
         .map(lambda message: next_response(
-            'caller1', json.loads(message['key'].decode('utf-8'))['conversationId'], message['value'].decode('utf-8'))) \
+            json.loads(message['key'].decode('utf-8'))['callerId'],
+            json.loads(message['key'].decode('utf-8'))['conversationId'],
+            message['value'].decode('utf-8'))) \
         .sink_to(kafka_sink)
 
     # inference
@@ -169,15 +177,16 @@ if __name__ == "__main__":
                                    watermark_strategy=WatermarkStrategy.no_watermarks(),
                                    source_name="KafkaSource")
 
-    # conversations: transcription
+    # analysis: inference
+    # todo {'value': b'\x80\x05\x95\xb6\x00\x00\x00\x00\x00\x00\x00\x8c\xb2{"conversationId": "2e45240c-7a63-4536-82e1-34d367390199", "speakerId": "a7bec955a54ac89a08aa74bf4e8c573041ed7931eef36fded01b1c4706e24d58", "confidenceScore": 21.518813247201425}\x94.', 'key': None}
     inference_ds \
-        .map(lambda message: print(message) or message) \
-        .filter(lambda message: 'confidenceScore' in json.loads(message['value'].decode('utf-8'))) \
-        .key_by(lambda message: json.loads(message['value'].decode('utf-8'))['conversationId'], Types.STRING()) \
-        .map(lambda message: conversation_manager.update_confidence_score(
-            json.loads(message['value'].decode('utf-8'))['speakerId'],
-            json.loads(message['value'].decode('utf-8'))['conversationId'],
-            json.loads(message['value'].decode('utf-8'))['confidenceScore'])) \
+        .map(lambda message: print('inference message:', message) or message['value'][13:-2].decode('utf-8')) \
+        .filter(lambda value: 'confidenceScore' in json.loads(value)) \
+        .key_by(lambda value: json.loads(value)['conversationId'], Types.STRING()) \
+        .map(lambda value: update_confidence_score(
+            json.loads(value)['speakerId'],
+            json.loads(value)['conversationId'],
+            json.loads(value)['confidenceScore'])) \
 
     print('starting Flink job')
     env.execute("genesys-chat")
