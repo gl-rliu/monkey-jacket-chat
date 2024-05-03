@@ -2,7 +2,7 @@ from openai import OpenAI
 
 client = OpenAI()
 
-model = 'gpt-3.5-turbo'
+model = 'gpt-4-turbo'
 
 
 def get_initial_greeting(actual_character, imposter_character):
