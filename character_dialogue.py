@@ -44,8 +44,8 @@ def get_end_caller_question_round(actual_character, imposter_character, caller_n
 
 def get_user_guess_response(actual_character, caller_guess):
     system_prompt = f"You are {actual_character}"
-    user_prompt = (f"Someone tried to guess who you are by saying you are {caller_guess}.  What is your response to "
-                   f"that question by revealing yourself using your first name only?")
+    user_prompt = (f"Someone tried to guess you are {caller_guess}.  reveal who you are using your first name only and "
+                   f"also a bit about yourself?")
     return get_chat_response(user_prompt, system_prompt)
 
 

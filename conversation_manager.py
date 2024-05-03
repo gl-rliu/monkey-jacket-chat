@@ -15,7 +15,7 @@ caller_question_count = 5
 character_reveal_stage = caller_question_count + 1
 character_question_count = 5
 caller_reveal_stage = character_reveal_stage + character_question_count
-confidence_threshold = 75.0
+confidence_threshold = 85.0
 
 
 def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes, text: str
@@ -105,7 +105,7 @@ def get_response(caller_id, conversation_id, request_phrase):  # Response audio:
             print(f" caller_reveal_stage: {stage}")
             if (conversation[first_call] or
                     (len(conversation[confidence_scores]) > 0 and
-                     statistics.fmean(conversation[confidence_scores]) >= confidence_threshold)):
+                     max(conversation[confidence_scores]) >= confidence_threshold)):
                 response_text = get_real_caller_response(conversation[actual],
                                                          conversation[caller_name])
             else:
@@ -139,7 +139,7 @@ def update_confidence_score(caller_id, conversation_id, confidence_score):
 
     conversation[confidence_scores].append(confidence_score)
     with open(conversation_path, "a") as file:
-        print(f"confidence score: instance {confidence_score}, avg {statistics.fmean(conversation[confidence_scores])}",
+        print(f"confidence score: instance {confidence_score}, avg {statistics.fmean(conversation[confidence_scores])}, max {max(conversation[confidence_scores])}",
               file=file)
 
 
@@ -156,5 +156,6 @@ if __name__ == '__main__':
     print(get_response("mike", "123", "Caller Answer 1")["text"])
     print(get_response("mike", "123", "Caller Answer 2")["text"])
     print(get_response("mike", "123", "Caller Answer 3")["text"])
+    update_confidence_score("mike", "123", 90)
     print(get_response("mike", "123", "Caller Answer 4")["text"])
     print(get_response("mike", "123", "Caller Answer 5")["text"])
