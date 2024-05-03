@@ -36,44 +36,50 @@ def get_question_response(actual_character, imposter_character, user_question):
     return get_chat_response(user_prompt, system_prompt)
 
 
-def get_end_question_round(actual_character, imposter_character, caller_name):
+def get_end_caller_question_round(actual_character, imposter_character, caller_name):
     system_prompt = f"You are {actual_character} but talk like {imposter_character}"
     user_prompt = f"how do you say \"OK {caller_name}, enough questions. Now tell me who I am!!!\""
     return get_chat_response(user_prompt, system_prompt)
 
 
-def get_user_guess_response(actual_character, imposter_character, caller_guess):
-    system_prompt = f"You are {actual_character} but talk like {imposter_character}"
+def get_user_guess_response(actual_character, caller_guess):
+    system_prompt = f"You are {actual_character}"
     user_prompt = (f"Someone tried to guess who you are by saying you are {caller_guess}.  What is your response to "
                    f"that question by revealing yourself?")
     return get_chat_response(user_prompt, system_prompt)
 
 
-def get_guess_caller_first_question(actual_character, imposter_character):
-    system_prompt = f"You are {actual_character} but talk like {imposter_character}"
+def get_guess_caller_first_question(actual_character):
+    system_prompt = f"You are {actual_character}"
     user_prompt = ("Say \" it is now my turn to guess who you are by asking 10 questions.\"  Come up with the first "
                    "question that is funny that the caller will need to provide a long answer.")
     return get_chat_response(user_prompt, system_prompt)
 
 
-def get_guess_caller_question(actual_character, imposter_character):
-    system_prompt = f"You are {actual_character} but talk like {imposter_character}"
+def get_guess_caller_question(actual_character):
+    system_prompt = f"You are {actual_character}"
     user_prompt = "Come up with a question that is funny that the someone will need to provide a long answer for."
     return get_chat_response(user_prompt, system_prompt)
 
 
-def get_fake_caller_response(actual_character, imposter_character, caller_name):
-    system_prompt = f"You are {actual_character} but talk like {imposter_character}"
+def get_fake_caller_response(actual_character, caller_name):
+    system_prompt = f"You are {actual_character}"
     user_prompt = (f"say in your own words \"Ok ok let me think let me think but wait a minute, are you really"
                    f"{caller_name} I don't know. I am so confused. who am I??? where am I??? ok until next time. "
                    "bye!!!\"")
     return get_chat_response(user_prompt, system_prompt)
 
 
-def get_real_caller_response(actual_character, imposter_character, caller_name):
-    system_prompt = f"You are {actual_character} but talk like {imposter_character}"
+def get_real_caller_response(actual_character, caller_name):
+    system_prompt = f"You are {actual_character}"
     user_prompt = (f"say in your own words \"Ok ok let me think let me think I think you are... {caller_name}!  Ok "
                    f"until next time. Call again and play with me. bye!!!\"")
+    return get_chat_response(user_prompt, system_prompt)
+
+
+def get_end_call_response(actual_character, caller_name):
+    system_prompt = f"You are {actual_character}"
+    user_prompt = f"say something like \"hey {caller_name}, the call is over. Time to hang up!\""
     return get_chat_response(user_prompt, system_prompt)
 
 
