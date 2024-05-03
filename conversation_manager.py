@@ -80,6 +80,7 @@ def get_response(caller_id, conversation_id, request_phrase):  # Response audio:
         case stage if 0 < stage < caller_question_count:
             print(f"caller_question_stage: {stage}")
             response_text = get_question_response(conversation[actual], conversation[imposter], request_phrase)
+            response_text += ". Ask me another one."
             response_audio = get_response_audio(conversation[imposter], response_text)
         case stage if stage == caller_question_count:
             print(f"end_caller_question_stage: {stage}")
@@ -95,7 +96,11 @@ def get_response(caller_id, conversation_id, request_phrase):  # Response audio:
             response_audio = get_response_audio(conversation[actual], response_text)
         case stage if character_reveal_stage < stage < caller_reveal_stage:
             print(f" character_question_stage: {stage}")
-            response_text = get_guess_caller_question(conversation[actual])
+            if stage == caller_reveal_stage - 1:
+                response_text = "final question. "
+                response_text += get_guess_caller_question(conversation[actual])
+            else:
+                response_text = get_guess_caller_question(conversation[actual])
             response_audio = get_response_audio(conversation[actual], response_text)
         case stage if stage == caller_reveal_stage:
             print(f" caller_reveal_stage: {stage}")
@@ -142,13 +147,12 @@ def update_confidence_score(caller_id, conversation_id, confidence_score):
 if __name__ == '__main__':
     # Guess the Character Round
     print(get_initial_greeting("mike", "123")["text"])
-    print(get_response("mike", "123", "Mike")["text"])
+    # print(get_response("mike", "123", "Mike")["text"])
     print(get_response("mike", "123", "what is your name")["text"])
     print(get_response("mike", "123", "what is your favourite color")["text"])
     print(get_response("mike", "123", "what is your home address")["text"])
     print(get_response("mike", "123", "what is your best friend")["text"])
     print(get_response("mike", "123", "what is your wife's name")["text"])
-    print(get_response("mike", "123", "are we done yet")["text"])
     print(get_response("mike", "123", "homer simpson")["text"])
     print(get_response("mike", "123", "Caller Answer 1")["text"])
     print(get_response("mike", "123", "Caller Answer 2")["text"])
