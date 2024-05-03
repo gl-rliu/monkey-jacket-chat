@@ -16,7 +16,8 @@ voices = {"arnold schwartzenegger": "4q1HMIvKfgbjxb0BZsu3",
           "hussain jaber": "ul8JnhojCgF8iA2WgCjz",
           "homer simpson": "vWgQedHHDqGUvqr7A08O"}
 
-cached_greeting_audio = {"homer simpson": "audio/greeting-arnold_as_homer.wav"}
+cached_first_greeting_audio = {"homer simpson": "audio/greeting-arnold_as_homer.wav"}
+cached_return_greeting_audio = {"homer simpson": "audio/return_greeting-arnold_as_homer.wav"}
 
 
 def get_response_audio(voice_character, response_text):
@@ -69,8 +70,11 @@ def get_response_audio(voice_character, response_text):
         print(response.text)
 
 
-def get_greeting_audio(voice_character):
-    cached_file = cached_greeting_audio[voice_character]
+def get_greeting_audio(voice_character, first_time):
+    if first_time:
+        cached_file = cached_first_greeting_audio[voice_character]
+    else:
+        cached_file = cached_return_greeting_audio[voice_character]
     if cached_file:
         try:
             with open(cached_file, 'rb') as file:
@@ -85,7 +89,7 @@ def get_greeting_audio(voice_character):
 
 
 if __name__ == '__main__':
-    text = ("Mmm, doughnuts... Oh, hey! Welcome to Mystery Talker. Here's the deal: You get to ask me 20 questions, "
+    text = ("Mmm, doughnuts... Oh, hey! Welcome to Mystery Talker. Here's the deal: You get to ask me some questions, "
             "anything you want, and try to guess who I am. I’ll be doing the same, but I gotta record your voice to "
             "make a voice print. If that freaks you out, better hang up now! So, what’s your name, buddy?")
-    print(f"{len(get_greeting_audio('homer simpson'))} bytes were produced")
+    print(f"{len(get_response_audio('homer simpson', text))} bytes were produced")

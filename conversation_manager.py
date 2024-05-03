@@ -33,7 +33,7 @@ def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes,
     if not Path(name_path).exists():
         Path(caller_path).mkdir(parents=True, exist_ok=True)
         greeting_text = (
-            "Mmm, doughnuts... Oh, hey! Welcome to Mystery Talker. Here's the deal: You get to ask me 20 questions, "
+            "Mmm, doughnuts... Oh, hey! Welcome to Mystery Talker. Here's the deal: You get to ask me some questions, "
             "anything you want, and try to guess who I am. I’ll be doing the same, but I gotta record your voice to "
             "make a voice print. If that freaks you out, better hang up now! So, what’s your name, buddy?")
     else:
@@ -43,7 +43,7 @@ def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes,
 
         conversation[call_stage] = 1
         conversation[first_call] = False
-        greeting_text = ("D'oh! Welcome back to Mystery Talker, man! Just like last time, you'll ask me 20 questions, "
+        greeting_text = ("D'oh! Welcome back to Mystery Talker, man! Just like last time, you'll ask me some questions,"
                          "whatever you want, and try to guess who I am. I'll do the same, but I gotta record your "
                          "voice to create your voice print. If you don't want me to hang up now!!!! OK, ask me the "
                          "questions, woohoo!")
@@ -52,9 +52,8 @@ def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes,
     with open(f"{caller_path}/{conversation_id}.txt", "w") as file:
         print(f"system: {greeting_text}", file=file)
 
-    # TODO handle return caller greeting audio
     return {"text": greeting_text,
-            "audio": get_greeting_audio(conversation[imposter]),
+            "audio": get_greeting_audio(conversation[imposter], conversation[first_call]),
             "stage": "greeting"}
 
 
