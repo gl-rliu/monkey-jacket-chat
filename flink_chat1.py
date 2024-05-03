@@ -62,7 +62,7 @@ def next_response(caller_id, conversation_id, request_phrase):
     t1 = time.time()
     print(f"0.0s received phrase, generating response: {request_phrase}")
     response = conversation_manager.get_response(caller_id, conversation_id, request_phrase)
-    print(f'{time.time() - t1}s response generated: {response["text"]}, {len(response["audio"])} bytes')
+    print(f"{time.time() - t1}s response generated: {response['text']}, {len(response['audio']) if response['audio'] else 0} bytes")
     key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
     return key, response['audio']
 
@@ -141,20 +141,21 @@ if __name__ == "__main__":
         .set_property('ssl.ca.location', 'ISRG Root X1.crt') \
         .build()
 
-    ds = env.from_source(source=conversations_kafka_source,
-                         watermark_strategy=WatermarkStrategy.no_watermarks(),
-                         source_name="KafkaSource")
+    conversations_ds = env.from_source(source=conversations_kafka_source,
+                                       watermark_strategy=WatermarkStrategy.no_watermarks(),
+                                       source_name="KafkaSource")
 
     # ignore close for now
     # conversations: open
-    ds \
+    conversations_ds \
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['type'] == 'open') \
         .key_by(lambda message: json.loads(message['key'].decode('utf-8'))['conversationId'], Types.STRING()) \
-        .map(lambda message: initial_greeting('caller1', json.loads(message['key'].decode('utf-8'))['conversationId'])) \
+        .map(lambda message: initial_greeting(
+            json.loads(message['key'].decode('utf-8'))['callerId'], json.loads(message['key'].decode('utf-8'))['conversationId'])) \
         .sink_to(kafka_sink)
 
     # conversations: transcription
-    ds \
+    conversations_ds \
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['channel'] == 'EXTERNAL') \
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['type'] == 'transcription') \
         .filter(lambda message: message['value'].decode('utf-8') and len(message['value'].decode('utf-8')) > 0) \
@@ -164,7 +165,19 @@ if __name__ == "__main__":
         .sink_to(kafka_sink)
 
     # inference
-    # TODO
+    inference_ds = env.from_source(source=inference_kafka_source,
+                                   watermark_strategy=WatermarkStrategy.no_watermarks(),
+                                   source_name="KafkaSource")
+
+    # conversations: transcription
+    inference_ds \
+        .map(lambda message: print(message) or message) \
+        .filter(lambda message: 'confidenceScore' in json.loads(message['value'].decode('utf-8'))) \
+        .key_by(lambda message: json.loads(message['value'].decode('utf-8'))['conversationId'], Types.STRING()) \
+        .map(lambda message: conversation_manager.update_confidence_score(
+            json.loads(message['value'].decode('utf-8'))['speakerId'],
+            json.loads(message['value'].decode('utf-8'))['conversationId'],
+            json.loads(message['value'].decode('utf-8'))['confidenceScore'])) \
 
     print('starting Flink job')
     env.execute("genesys-chat")
