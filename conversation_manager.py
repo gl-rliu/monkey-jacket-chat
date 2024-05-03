@@ -99,7 +99,9 @@ def get_response(caller_id, conversation_id, request_phrase):  # Response audio:
             response_audio = get_response_audio(conversation[actual], response_text)
         case stage if stage == caller_reveal_stage:
             print(f" caller_reveal_stage: {stage}")
-            if conversation[first_call] or statistics.fmean(conversation[confidence_scores]) >= confidence_threshold:
+            if (conversation[first_call] or
+                    (len(conversation[confidence_scores]) > 0 and
+                     statistics.fmean(conversation[confidence_scores]) >= confidence_threshold)):
                 response_text = get_real_caller_response(conversation[actual],
                                                          conversation[caller_name])
             else:
@@ -147,11 +149,6 @@ if __name__ == '__main__':
     print(get_response("mike", "123", "what is your best friend")["text"])
     print(get_response("mike", "123", "what is your wife's name")["text"])
     print(get_response("mike", "123", "are we done yet")["text"])
-    update_confidence_score("mike", "123", 0.75)
-    update_confidence_score("mike", "123", 0.70)
-    update_confidence_score("mike", "123", 0.22)
-    update_confidence_score("mike", "123", 0.85)
-    update_confidence_score("mike", "123", 0.75)
     print(get_response("mike", "123", "homer simpson")["text"])
     print(get_response("mike", "123", "Caller Answer 1")["text"])
     print(get_response("mike", "123", "Caller Answer 2")["text"])
