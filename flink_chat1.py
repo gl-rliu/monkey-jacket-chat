@@ -18,7 +18,7 @@ import conversation_manager
 
 def current_ts():
     now = datetime.datetime.now(pytz.timezone('America/Toronto'))
-    return now.strftime("%Y-%m-%dT%H-%M-%S.%f")[:-3]
+    return now.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
 
 
 class BinaryDeserializationSchema(DeserializationSchema):
