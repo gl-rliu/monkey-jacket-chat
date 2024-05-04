@@ -120,6 +120,10 @@ def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes,
     caller_path = f"{CALLER_PATH_PREFIX}/{caller_id}"
     conversation = initialize_conversation(caller_id, conversation_id)
 
+    if "homer simpson" not in cached_greeting_audio:
+        print("loading greeting cache")
+        load_greeting_cache("audio")
+
     if conversation[first_call]:
         caller_status = "initial"
     else:
@@ -229,8 +233,6 @@ def update_confidence_score(caller_id, conversation_id, confidence_score):
 
 
 if __name__ == '__main__':
-    load_greeting_cache("audio")
-
     # Guess the Character Round
     print(get_initial_greeting("mike", "123")["text"])
     print(get_response("mike", "123", "Mike")["text"])
