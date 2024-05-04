@@ -62,8 +62,8 @@ def cache_greeting_audio(character, audio_bytes, new_caller):
     else:
         file_prefix = "return"
 
-    file_name = f'audio/{file_prefix}_greeting-{character}.wav'
-    with open(file_name, 'wb') as file:  # Open a file in binary write mode
+    file_name = f'{file_prefix}_greeting-{character}.wav'
+    with open("audio/" + file_name, 'wb') as file:  
         file.write(audio_bytes)
 
     cached_greeting_audio[character][file_prefix] = file_name
