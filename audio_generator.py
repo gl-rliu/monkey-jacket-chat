@@ -9,15 +9,19 @@ voices = {"arnold schwartzenegger": "4q1HMIvKfgbjxb0BZsu3",
           "elmer fudd": "7BXee8r6HkvGL1OZIoEb",
           "miss piggy": "I6hJhvdUjFywlRS2sHr1",
           "scarlett johansson": "LJwyTpb1P1Y0YgmwA1cU",
-          "crash the turtle": "O2Jg7hvavg2CM92Adt5T",
+          "crush the turtle": "O2Jg7hvavg2CM92Adt5T",
           "yoda": "OPPPrIAzqxpRo0z4bVUt",
           "morgan freeman": "cKjPC0QFrO0D9852wMzs",
           "super mario": "lXteNbvxCHpyDoNeWC0b",
           "hussain jaber": "ul8JnhojCgF8iA2WgCjz",
           "homer simpson": "vWgQedHHDqGUvqr7A08O"}
 
-cached_first_greeting_audio = {"homer simpson": "audio/greeting-arnold_as_homer.wav"}
-cached_return_greeting_audio = {"homer simpson": "audio/return_greeting-arnold_as_homer.wav"}
+cached_first_greeting_audio = {"homer simpson": "audio/initial_greeting-homer simpson.wav",
+                               "crush the turtle": "audio/greeting-crush_as_elmer.wav",
+                               "scarlett johansson": "audio/greeting-scarlett_as_piggy.wav"}
+cached_return_greeting_audio = {"homer simpson": "audio/return_greeting-homer simpson.wav",
+                                "crush the turtle": "audio/return_greeting-crush_as_elmer.wav",
+                                "scarlett johansson": "audio/return_greeting-scarlett_as_piggy.wav"}
 
 
 def get_response_audio(voice_character, response_text):
@@ -60,7 +64,7 @@ def get_response_audio(voice_character, response_text):
 
             return byte_array
         else:
-            with open('audio/greeting-arnold_as_homer.wav', 'wb') as file:  # Open a file in binary write mode
+            with open('audio/greeting-crush_as_elmer.wav', 'wb') as file:  # Open a file in binary write mode
                 # Iterate over the response content in chunks and write to the file
                 for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
                     if chunk:  # Filter out keep-alive new chunks
@@ -89,7 +93,11 @@ def get_greeting_audio(voice_character, first_time):
 
 
 if __name__ == '__main__':
-    text = ("Mmm, doughnuts... Oh, hey! Welcome to Mystery Talker. Here's the deal: You get to ask me some questions, "
+    text = ("Oh, hey! Welcome to Mystery Talker. Here's the deal: You get to ask me some questions, "
             "anything you want, and try to guess who I am. I’ll be doing the same, but I gotta record your voice to "
             "make a voice print. If that freaks you out, better hang up now! So, what’s your name, buddy?")
-    print(f"{len(get_response_audio('homer simpson', text))} bytes were produced")
+    # text = ("Welcome back to Mystery Talker, man! Just like last time, you'll ask me some questions,"
+    #         "whatever you want, and try to guess who I am. I'll do the same, but I gotta record your "
+    #         "voice to create your voice print. If you don't want me to hang up now!!!! OK, ask me the "
+    #         "questions")
+    print(f"{len(get_response_audio('crush the turtle', text))} bytes were produced")

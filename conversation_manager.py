@@ -1,7 +1,10 @@
+import random
 from pathlib import Path
-from audio_generator import get_greeting_audio, get_response_audio
+from audio_generator import get_response_audio
 from character_dialogue import *
 import statistics
+import os
+import re
 
 CALLER_PATH_PREFIX = 'callers'
 conversation_state = {}
@@ -17,14 +20,81 @@ character_question_count = 5
 caller_reveal_stage = character_reveal_stage + character_question_count
 confidence_threshold = 85.0
 
+cached_greeting_audio = {}
+character_list = ["arnold schwartzenegger",
+                  "homer simpson",
+                  "elmer fudd",
+                  "miss piggy",
+                  "scarlett johansson",
+                  "crush the turtle",
+                  "yoda",
+                  "morgan freeman",
+                  "super mario"
+                  ]
 
-def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes, text: str
+
+def load_greeting_cache(path):
+    try:
+        directory_listing = os.listdir(path)
+    except FileNotFoundError:
+        print(f"Directory '{path}' not found.")
+        return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+    for character in character_list:
+        cached_greeting_audio[character] = {}
+
+    prefix_pattern = r'^(.*?)_greeting'
+    character_pattern = r'_greeting-(.*?)\.wav'
+    for file_name in directory_listing:
+        prefix_match = re.search(prefix_pattern, file_name)
+        prefix = prefix_match.group(1)
+        character_match = re.search(character_pattern, file_name)
+        character = character_match.group(1)
+        cached_greeting_audio[character][prefix] = file_name
+
+
+def cache_greeting_audio(character, audio_bytes, new_caller):
+    if new_caller:
+        file_prefix = "initial"
+    else:
+        file_prefix = "return"
+
+    file_name = f'audio/{file_prefix}_greeting-{character}.wav'
+    with open(file_name, 'wb') as file:  # Open a file in binary write mode
+        file.write(audio_bytes)
+
+    cached_greeting_audio[character][file_prefix] = file_name
+
+
+def get_cached_audio(audiofile):
+    if audiofile:
+        file_name = "audio/" + audiofile
+        try:
+            with open(file_name, 'rb') as file:
+                byte_array = bytearray(file.read())
+                return byte_array
+        except FileNotFoundError:
+            print(f"File '{file_name}' not found.")
+            return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+
+
+def initialize_conversation(caller_id, conversation_id):
     caller_path = f"{CALLER_PATH_PREFIX}/{caller_id}"
     name_path = f"{caller_path}/caller_name.txt"
 
-    # TODO randomize the characters
-    conversation_state[conversation_id] = {actual: "arnold schwartzenegger",
-                                           imposter: "homer simpson",
+    real_character = random.choice(character_list)
+    fake_character = real_character
+    while fake_character == real_character:
+        fake_character = random.choice(character_list)
+
+    conversation_state[conversation_id] = {actual: real_character,
+                                           imposter: fake_character,
                                            confidence_scores: [],
                                            call_stage: 0,
                                            first_call: True}
@@ -32,28 +102,42 @@ def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes,
 
     if not Path(name_path).exists():
         Path(caller_path).mkdir(parents=True, exist_ok=True)
-        greeting_text = (
-            "Mmm, doughnuts... Oh, hey! Welcome to Mystery Talker. Here's the deal: You get to ask me some questions, "
-            "anything you want, and try to guess who I am. I’ll be doing the same, but I gotta record your voice to "
-            "make a voice print. If that freaks you out, better hang up now! So, what’s your name, buddy?")
     else:
-        # TODO do we add caller's name to the response?
         with open(name_path, "r") as file:
             conversation[caller_name] = file.readline()
 
         conversation[call_stage] = 1
         conversation[first_call] = False
-        greeting_text = ("D'oh! Welcome back to Mystery Talker, man! Just like last time, you'll ask me some questions,"
-                         "whatever you want, and try to guess who I am. I'll do the same, but I gotta record your "
-                         "voice to create your voice print. If you don't want me to hang up now!!!! OK, ask me the "
-                         "questions, woohoo!")
 
-    # create initial conversation file
-    with open(f"{caller_path}/{conversation_id}.txt", "w") as file:
+        with open(f"{caller_path}/{conversation_id}.txt", "w") as file:
+            print(f"call started with actual: {conversation[actual]} and imposter: {conversation[imposter]}",
+                  file=file)
+
+    return conversation
+
+
+def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes, text: str
+    caller_path = f"{CALLER_PATH_PREFIX}/{caller_id}"
+    conversation = initialize_conversation(caller_id, conversation_id)
+
+    if conversation[first_call]:
+        caller_status = "initial"
+    else:
+        caller_status = "return"
+
+    if caller_status in cached_greeting_audio[conversation[imposter]]:
+        audio = get_cached_audio(cached_greeting_audio[conversation[imposter]][caller_status])
+        greeting_text = "cached initial greeting"
+    else:
+        greeting_text = get_first_greeting(conversation[actual], conversation[imposter])
+        audio = get_response_audio(conversation[imposter], greeting_text)
+        cache_greeting_audio(conversation[imposter], audio, caller_status == "initial")
+
+    with open(f"{caller_path}/{conversation_id}.txt", "a") as file:
         print(f"system: {greeting_text}", file=file)
 
     return {"text": greeting_text,
-            "audio": get_greeting_audio(conversation[imposter], conversation[first_call]),
+            "audio": audio,
             "stage": "greeting"}
 
 
@@ -70,7 +154,7 @@ def get_response(caller_id, conversation_id, request_phrase):  # Response audio:
         case 0:  # post initial greeting is caller saying their name
             print(f"init stage: 0")
             conversation[caller_name] = request_phrase
-            with open(name_path, "w") as file:
+            with open(name_path, "a") as file:
                 print(conversation[caller_name], file=file)
             response_text = get_caller_name_recognition(conversation[actual],
                                                         conversation[imposter],
@@ -139,14 +223,17 @@ def update_confidence_score(caller_id, conversation_id, confidence_score):
 
     conversation[confidence_scores].append(confidence_score)
     with open(conversation_path, "a") as file:
-        print(f"confidence score: instance {confidence_score}, avg {statistics.fmean(conversation[confidence_scores])}, max {max(conversation[confidence_scores])}",
-              file=file)
+        print(
+            f"confidence score: instance {confidence_score}, avg {statistics.fmean(conversation[confidence_scores])}, max {max(conversation[confidence_scores])}",
+            file=file)
 
 
 if __name__ == '__main__':
+    load_greeting_cache("audio")
+
     # Guess the Character Round
     print(get_initial_greeting("mike", "123")["text"])
-    # print(get_response("mike", "123", "Mike")["text"])
+    print(get_response("mike", "123", "Mike")["text"])
     print(get_response("mike", "123", "what is your name")["text"])
     print(get_response("mike", "123", "what is your favourite color")["text"])
     print(get_response("mike", "123", "what is your home address")["text"])

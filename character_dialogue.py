@@ -5,7 +5,7 @@ client = OpenAI()
 model = 'gpt-3.5-turbo'
 
 
-def get_initial_greeting(actual_character, imposter_character):
+def get_first_greeting(actual_character, imposter_character):
     system_prompt = f"You are {actual_character} but talk like {imposter_character}"
     user_prompt = ("say \"Welcome to Mystery Talker. You will ask me some questions, whatever you want and "
                    "you will guess who I am. I will do the same but I will need to record your voice and create your "
