@@ -1,5 +1,7 @@
+import datetime
 import json
 import os
+import pytz
 import time
 
 from pyflink.common import WatermarkStrategy
@@ -12,6 +14,11 @@ from pyflink.datastream.connectors.kafka import KafkaSource, \
 from pyflink.java_gateway import get_gateway
 
 import conversation_manager
+
+
+def current_ts():
+    now = datetime.datetime.now(pytz.timezone('America/Toronto'))
+    return now.strftime("%Y-%m-%dT%H-%M-%S.%f")[:-3]
 
 
 class BinaryDeserializationSchema(DeserializationSchema):
@@ -49,10 +56,10 @@ class KeyValueSerializationSchema(SerializationSchema):
 
 def initial_greeting(caller_id, conversation_id):
     t1 = time.time()
-    print(f"0.000s received call {conversation_id} from {caller_id}: generating initial greeting")
+    print(f"{current_ts()}: 0.000s received call {conversation_id} from {caller_id}: generating initial greeting")
     # {"text": greeting_text, "audio": bytes}
     greeting = conversation_manager.get_initial_greeting(caller_id, conversation_id)
-    print(f"{time.time() - t1}s initial greeting and audio generated: {greeting['text']}, {len(greeting['audio']) if greeting['audio'] else 0} bytes")
+    print(f"{current_ts()}: {time.time() - t1}s initial greeting and audio generated: {greeting['text']}, {len(greeting['audio']) if greeting['audio'] else 0} bytes")
     key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
     # print(f"${time.time() - t1}s initial greeting generated: {greeting['text']}, {len(greeting['audio'])} bytes")
     return key, greeting['audio']
@@ -60,15 +67,15 @@ def initial_greeting(caller_id, conversation_id):
 
 def next_response(caller_id, conversation_id, request_phrase):
     t1 = time.time()
-    print(f"0.0s conversation {conversation_id} received phrase from {caller_id}, generating response for: {request_phrase}")
+    print(f"{current_ts()}: 0.0s conversation {conversation_id} received phrase from {caller_id}, generating response for: {request_phrase}")
     response = conversation_manager.get_response(caller_id, conversation_id, request_phrase)
-    print(f"{time.time() - t1}s response generated: {response['text']}, {len(response['audio']) if response['audio'] else 0} bytes")
+    print(f"{current_ts()}: {time.time() - t1}s response generated: {response['text']}, {len(response['audio']) if response['audio'] else 0} bytes")
     key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
     return key, response['audio']
 
 
 def update_confidence_score(caller_id, conversation_id, confidence_score):
-    print(f"Updating confidence score of conversation {conversation_id} with caller {caller_id}: {confidence_score}")
+    print(f"{current_ts()}: Updating confidence score of conversation {conversation_id} with caller {caller_id}: {confidence_score}")
     conversation_manager.update_confidence_score(caller_id, conversation_id, confidence_score)
 
 
@@ -114,7 +121,8 @@ if __name__ == "__main__":
         .set_deserializer(BinaryDeserializationSchema(j_deserialization_schema=j_byte_array_deserialization_schema)) \
         .set_property('security.protocol', 'SASL_SSL') \
         .set_property('sasl.mechanism', 'PLAIN') \
-        .set_property('sasl.jaas.config', f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{kafka_user}" password="{kafka_password}";') \
+        .set_property('sasl.jaas.config',
+                      f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{kafka_user}" password="{kafka_password}";') \
         .set_property('ssl.ca.location', 'ISRG Root X1.crt') \
         .build()
 
@@ -126,7 +134,8 @@ if __name__ == "__main__":
         .set_deserializer(BinaryDeserializationSchema(j_deserialization_schema=j_byte_array_deserialization_schema)) \
         .set_property('security.protocol', 'SASL_SSL') \
         .set_property('sasl.mechanism', 'PLAIN') \
-        .set_property('sasl.jaas.config', f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{kafka_user}" password="{kafka_password}";') \
+        .set_property('sasl.jaas.config',
+                      f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{kafka_user}" password="{kafka_password}";') \
         .set_property('ssl.ca.location', 'ISRG Root X1.crt') \
         .build()
 
@@ -142,7 +151,8 @@ if __name__ == "__main__":
         .set_delivery_guarantee(DeliveryGuarantee.NONE) \
         .set_property('security.protocol', 'SASL_SSL') \
         .set_property('sasl.mechanism', 'PLAIN') \
-        .set_property('sasl.jaas.config', f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{kafka_user}" password="{kafka_password}";') \
+        .set_property('sasl.jaas.config',
+                      f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{kafka_user}" password="{kafka_password}";') \
         .set_property('ssl.ca.location', 'ISRG Root X1.crt') \
         .build()
 
@@ -178,7 +188,6 @@ if __name__ == "__main__":
                                    source_name="KafkaSource")
 
     # analysis: inference
-    # todo {'value': b'\x80\x05\x95\xb6\x00\x00\x00\x00\x00\x00\x00\x8c\xb2{"conversationId": "2e45240c-7a63-4536-82e1-34d367390199", "speakerId": "a7bec955a54ac89a08aa74bf4e8c573041ed7931eef36fded01b1c4706e24d58", "confidenceScore": 21.518813247201425}\x94.', 'key': None}
     inference_ds \
         .map(lambda message: print('inference message:', message) or message['value'][13:-2].decode('utf-8')) \
         .filter(lambda value: 'confidenceScore' in json.loads(value)) \
@@ -188,5 +197,5 @@ if __name__ == "__main__":
             json.loads(value)['conversationId'],
             json.loads(value)['confidenceScore'])) \
 
-    print('starting Flink job')
+    print(f'{current_ts()}: starting Flink job')
     env.execute("genesys-chat")
