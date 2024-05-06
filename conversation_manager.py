@@ -52,6 +52,8 @@ def load_greeting_cache(path):
         character = character_match.group(1)
         cached_greeting_audio[character][prefix] = file_name
 
+    print(f'Audio Cache: {cached_greeting_audio}')
+
 
 def cache_greeting_audio(character, audio_bytes, new_caller):
     if new_caller:
@@ -60,6 +62,7 @@ def cache_greeting_audio(character, audio_bytes, new_caller):
         file_prefix = "return"
 
     file_name = f'{file_prefix}_greeting-{character}.wav'
+    print(f'Caching {file_prefix} greeting for character: {character} filename: {file_name}')
     with open("audio/" + file_name, 'wb') as file:
         file.write(audio_bytes)
 
