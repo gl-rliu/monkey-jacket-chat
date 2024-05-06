@@ -26,10 +26,7 @@ character_list = ["arnold schwartzenegger",
                   "elmer fudd",
                   "miss piggy",
                   "scarlett johansson",
-                  "crush the turtle",
-                  "yoda",
-                  "morgan freeman",
-                  "super mario"
+                  "crush the turtle"
                   ]
 
 
@@ -63,7 +60,7 @@ def cache_greeting_audio(character, audio_bytes, new_caller):
         file_prefix = "return"
 
     file_name = f'{file_prefix}_greeting-{character}.wav'
-    with open("audio/" + file_name, 'wb') as file:  
+    with open("audio/" + file_name, 'wb') as file:
         file.write(audio_bytes)
 
     cached_greeting_audio[character][file_prefix] = file_name
@@ -110,7 +107,7 @@ def initialize_conversation(caller_id, conversation_id):
         conversation[first_call] = False
 
         with open(f"{caller_path}/{conversation_id}.txt", "w") as file:
-            print(f"call started with actual: {conversation[actual]} and imposter: {conversation[imposter]}",
+            print(f"call started.  First time: {conversation[first_call]} actual: {conversation[actual]} and imposter: {conversation[imposter]}",
                   file=file)
 
     return conversation
