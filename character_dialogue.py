@@ -20,9 +20,9 @@ def get_caller_name_recognition(actual_character, imposter_character, caller_nam
     return get_chat_response(user_prompt, system_prompt)
 
 
-def get_returning_greeting(actual_character, imposter_character, caller_name):
+def get_returning_greeting(actual_character, imposter_character):
     system_prompt = f"You are {actual_character} but talk like {imposter_character}"
-    user_prompt = (f"how do you say \"Welcome back to Mystery Talker {caller_name} Just like last time. You will ask "
+    user_prompt = (f"how do you say \"Welcome back to Mystery Talker.  Just like last time. You will ask "
                    "me some questions, whatever you want and you will guess who I am. I will do the same but I will "
                    "need to record your voice and create your voice print. If you don't want me to hang up now!!!! "
                    "OK let's ask the questions!!!\"")

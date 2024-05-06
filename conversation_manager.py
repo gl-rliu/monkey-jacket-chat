@@ -100,7 +100,7 @@ def initialize_conversation(caller_id, conversation_id):
                                            first_call: True}
     conversation = conversation_state[conversation_id]
 
-    if not Path(name_path).exists():
+    if not Path(name_path).is_file():
         Path(caller_path).mkdir(parents=True, exist_ok=True)
     else:
         with open(name_path, "r") as file:
@@ -133,7 +133,10 @@ def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes,
         audio = get_cached_audio(cached_greeting_audio[conversation[imposter]][caller_status])
         greeting_text = "cached initial greeting"
     else:
-        greeting_text = get_first_greeting(conversation[actual], conversation[imposter])
+        if caller_status == "initial":
+            greeting_text = get_first_greeting(conversation[actual], conversation[imposter])
+        else:
+            greeting_text = get_returning_greeting(conversation[actual], conversation[imposter])
         audio = get_response_audio(conversation[imposter], greeting_text)
         cache_greeting_audio(conversation[imposter], audio, caller_status == "initial")
 
