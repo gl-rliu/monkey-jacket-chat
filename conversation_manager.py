@@ -1,3 +1,4 @@
+import math
 import random
 from pathlib import Path
 from audio_generator import get_response_audio
@@ -5,6 +6,7 @@ from character_dialogue import *
 import statistics
 import os
 import re
+from datetime import datetime, timedelta
 
 CALLER_PATH_PREFIX = 'callers'
 conversation_state = {}
@@ -14,11 +16,15 @@ call_stage = "call_stage"
 caller_name = "caller_name"
 confidence_scores = "confidence_scores"
 first_call = "first_call"
+time_to_allow_input = "time_to_allow_input"
 caller_question_count = 5
 character_reveal_stage = caller_question_count + 1
 character_question_count = 5
 caller_reveal_stage = character_reveal_stage + character_question_count
+sample_rate = 8000
 confidence_threshold = 85.0
+
+IGNORE_RESPONSE_TIME = False
 
 cached_greeting_audio = {}
 character_list = ["arnold schwartzenegger",
@@ -97,7 +103,8 @@ def initialize_conversation(caller_id, conversation_id):
                                            imposter: fake_character,
                                            confidence_scores: [],
                                            call_stage: 0,
-                                           first_call: True}
+                                           first_call: True,
+                                           time_to_allow_input: 0}
     conversation = conversation_state[conversation_id]
 
     if not Path(name_path).is_file():
@@ -143,6 +150,10 @@ def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes,
     with open(f"{caller_path}/{conversation_id}.txt", "a") as file:
         print(f"system: {greeting_text}", file=file)
 
+    audio_seconds = get_audio_length_pcmu(audio, sample_rate)
+
+    conversation[time_to_allow_input] = datetime.now() + timedelta(seconds=audio_seconds)
+
     return {"text": greeting_text,
             "audio": audio,
             "stage": "greeting"}
@@ -157,6 +168,11 @@ def get_response(caller_id, conversation_id, request_phrase):  # Response audio:
         return None
 
     conversation = conversation_state[conversation_id]
+
+    if not IGNORE_RESPONSE_TIME and datetime.now() < conversation[time_to_allow_input]:
+        print("ignoring input before the response is finished")
+        return None
+
     match conversation[call_stage]:
         case 0:  # post initial greeting is caller saying their name
             print(f"init stage: 0")
@@ -217,6 +233,9 @@ def get_response(caller_id, conversation_id, request_phrase):  # Response audio:
         print(f"caller: {request_phrase}", file=file)
         print(f"system: {response_text}", file=file)
 
+    audio_seconds = get_audio_length_pcmu(response_audio, sample_rate)
+    conversation[time_to_allow_input] = datetime.now() + timedelta(seconds=audio_seconds)
+
     return {"text": response_text, "audio": response_audio, "terminate": call_terminate}
 
 
@@ -233,6 +252,19 @@ def update_confidence_score(caller_id, conversation_id, confidence_score):
         print(
             f"confidence score: instance {confidence_score}, avg {statistics.fmean(conversation[confidence_scores])}, max {max(conversation[confidence_scores])}",
             file=file)
+
+
+def get_audio_length_pcmu(byte_array, sample_rate):
+    # Assuming 8-bit mu-law PCM encoding
+    bytes_per_sample = 1
+
+    # Calculate the number of samples
+    num_samples = len(byte_array) // bytes_per_sample
+
+    # Calculate the duration of the audio in seconds
+    duration = math.ceil(num_samples / float(sample_rate))
+
+    return duration
 
 
 if __name__ == '__main__':
