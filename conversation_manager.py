@@ -171,7 +171,7 @@ def get_response(caller_id, conversation_id, request_phrase):  # Response audio:
 
     if not IGNORE_RESPONSE_TIME and datetime.now() < conversation[time_to_allow_input]:
         print("ignoring input before the response is finished")
-        return None
+        return {"text": "", "audio": [], "terminate": False}
 
     match conversation[call_stage]:
         case 0:  # post initial greeting is caller saying their name
