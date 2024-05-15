@@ -1,14 +1,15 @@
 import math
 import random
 from pathlib import Path
-from audio_generator import get_response_audio
-from character_dialogue import *
+from .audio_generator import get_response_audio
+from .character_dialogue import *
 import statistics
 import os
 import re
 from datetime import datetime, timedelta
 
-CALLER_PATH_PREFIX = 'callers'
+AUDIO_CACHE_PATH = os.getcwd() + "/audio/"
+CALLER_PATH_PREFIX = os.getcwd() + '/callers/'
 conversation_state = {}
 actual = "actual"
 imposter = "imposter"
@@ -69,7 +70,7 @@ def cache_greeting_audio(character, audio_bytes, new_caller):
 
     file_name = f'{file_prefix}_greeting-{character}.wav'
     print(f'Caching {file_prefix} greeting for character: {character} filename: {file_name}')
-    with open("audio/" + file_name, 'wb') as file:
+    with open(AUDIO_CACHE_PATH + file_name, 'wb') as file:
         file.write(audio_bytes)
 
     cached_greeting_audio[character][file_prefix] = file_name
@@ -77,7 +78,7 @@ def cache_greeting_audio(character, audio_bytes, new_caller):
 
 def get_cached_audio(audiofile):
     if audiofile:
-        file_name = "audio/" + audiofile
+        file_name = AUDIO_CACHE_PATH + audiofile
         try:
             with open(file_name, 'rb') as file:
                 byte_array = bytearray(file.read())
@@ -129,7 +130,7 @@ def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes,
 
     if "homer simpson" not in cached_greeting_audio:
         print("loading greeting cache")
-        load_greeting_cache("audio")
+        load_greeting_cache("../../audio")
 
     if conversation[first_call]:
         caller_status = "initial"

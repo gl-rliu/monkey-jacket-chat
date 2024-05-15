@@ -13,7 +13,7 @@ from pyflink.datastream.connectors.kafka import KafkaSource, \
     KafkaSink, KafkaRecordSerializationSchema, KafkaOffsetsInitializer
 from pyflink.java_gateway import get_gateway
 
-import conversation_manager
+import conversation_engines.call_center.conversation_manager as conversation_manager
 
 
 def current_ts():
