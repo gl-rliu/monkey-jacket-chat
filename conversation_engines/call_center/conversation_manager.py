@@ -30,11 +30,9 @@ confidence_threshold = 85.0
 IGNORE_RESPONSE_TIME = False
 
 cached_greeting_audio = {}
-character_list = ["scarlett johansson"]
+character_list = ["emily"]
 
-call_synopsis = ("you are impersonating a call center agent for a large bank.  People will occasionally call to "
-                 "ask question about their account. You are receiving a call and will introduce yourself as Maria "
-                 "from Acme Financial")
+call_synopsis = system_prompt
 
 
 def load_greeting_cache(path):
@@ -187,8 +185,12 @@ def get_response(caller_id, conversation_id, request_phrase):  # Response audio:
         print(f"caller: {request_phrase}", file=file)
         print(f"system: {response_text}", file=file)
 
-    audio_seconds = get_audio_length_pcmu(response_audio, sample_rate)
-    conversation[time_to_allow_input] = datetime.now() + timedelta(seconds=audio_seconds)
+    if response_audio is None:
+        print("No Audio returned")
+        response_audio = get_response_audio(conversation[imposter], "I'm sorry, can you repeat that")
+    else:
+        audio_seconds = get_audio_length_pcmu(response_audio, sample_rate)
+        conversation[time_to_allow_input] = datetime.now() + timedelta(seconds=audio_seconds)
 
     return {"text": response_text, "audio": response_audio, "terminate": call_terminate}
 

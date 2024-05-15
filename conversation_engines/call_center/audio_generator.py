@@ -14,7 +14,8 @@ voices = {"arnold schwartzenegger": "4q1HMIvKfgbjxb0BZsu3",
           "morgan freeman": "cKjPC0QFrO0D9852wMzs",
           "super mario": "lXteNbvxCHpyDoNeWC0b",
           "hussain jaber": "ul8JnhojCgF8iA2WgCjz",
-          "homer simpson": "vWgQedHHDqGUvqr7A08O"}
+          "homer simpson": "vWgQedHHDqGUvqr7A08O",
+          "emily": "qKTZGZRubYFEhl3ZqFjn"}
 
 
 def get_response_audio(voice_character, response_text):
