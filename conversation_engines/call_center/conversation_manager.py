@@ -1,8 +1,8 @@
 import math
 import random
 from pathlib import Path
-from .audio_generator import get_response_audio
-from .character_dialogue import *
+from conversation_engines.call_center.audio_generator import get_response_audio
+from conversation_engines.call_center.character_dialogue import *
 import statistics
 import os
 import re
@@ -137,7 +137,7 @@ def get_initial_greeting(caller_id, conversation_id):  # Response  audio: bytes,
     conversation[conversation_history].append({"role": "system", "content": call_synopsis})
     if conversation[actual] in cached_greeting_audio and caller_status in cached_greeting_audio[conversation[actual]]:
         audio = get_cached_audio(cached_greeting_audio[conversation[actual]][caller_status])
-        greeting_text = "Hello! This is Maria from Acme Financial. How can I assist you today?"
+        greeting_text = "Hello! This is Emily from Acme Wealth. How may I assist you with your funds transfer today?"
     else:
         if caller_status == "initial":
             greeting_text = get_greeting()
@@ -226,7 +226,7 @@ def get_audio_length_pcmu(byte_array, sample_rate):
 if __name__ == '__main__':
     # Guess the Character Round
     print(get_initial_greeting("mike", "123")["text"])
-    print(get_response("mike", "123", "I need to reset my card pin")["text"])
+    print(get_response("mike", "123", "I need to transfer thirty thousand dollars to my cayman islands account")["text"])
     # print(get_response("mike", "123", "what is your name")["text"])
     # print(get_response("mike", "123", "what is your favourite color")["text"])
     # print(get_response("mike", "123", "what is your home address")["text"])

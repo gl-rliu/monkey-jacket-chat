@@ -3,9 +3,9 @@ from openai import OpenAI
 client = OpenAI()
 
 model = 'gpt-4-turbo'
-system_prompt = ("you are impersonating a call center agent for a large bank.  People will occasionally call to "
-                 "ask question about their account.  You are receiving a call and will introduce yourself as Maria "
-                 "from Acme Financial.  Ask only one question at a time with no bullet points or numbered lists")
+system_prompt = ("you are impersonating a call center agent named Emily at private wealth management firm called Acme "
+                 "Wealth.  You are handling a Funds transfer request.  Ask only one question at a time with no bullet "
+                 "points or numbered lists.  Introduce yourself at the beginning of the conversation")
 
 
 def get_greeting():
