@@ -1,3 +1,7 @@
+import sys
+sys.path.append('/Users/richardliu/Documents/Development/monkey_jacket/avatar/monkey-jacket-patient-avatar')
+
+
 import datetime
 import json
 import os
@@ -13,8 +17,10 @@ from pyflink.datastream.connectors.kafka import KafkaSource, \
     KafkaSink, KafkaRecordSerializationSchema, KafkaOffsetsInitializer
 from pyflink.java_gateway import get_gateway
 
-import conversation_engines.call_center.conversation_manager as conversation_manager
 
+
+#import conversation_engines.call_center.conversation_manager as conversation_manager
+import patient_endpoint as conversation_manager
 
 def current_ts():
     now = datetime.datetime.now(pytz.timezone('America/Toronto'))
@@ -54,10 +60,18 @@ class KeyValueSerializationSchema(SerializationSchema):
         return (key.encode('utf-8'), val.encode('utf-8'))
 
 
+def initialize_conversation(caller_id, conversation_id, conversation_context):
+    print(f"{current_ts()}: 0.000s received call {conversation_id} from {caller_id}: initing convo")
+    
+    convo_context = json.loads(conversation_context)
+    
+    conversation_manager.initialize_conversation(caller_id, conversation_id, convo_context)
+
 def initial_greeting(caller_id, conversation_id):
     t1 = time.time()
     print(f"{current_ts()}: 0.000s received call {conversation_id} from {caller_id}: generating initial greeting")
     # {"text": greeting_text, "audio": bytes}
+    conversation_manager.initialize_conversation()
     greeting = conversation_manager.get_initial_greeting(caller_id, conversation_id)
     print(f"{current_ts()}: {time.time() - t1}s initial greeting and audio generated: {greeting['text']}, {len(greeting['audio']) if greeting['audio'] else 0} bytes")
     key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
@@ -69,9 +83,9 @@ def next_response(caller_id, conversation_id, request_phrase):
     t1 = time.time()
     print(f"{current_ts()}: 0.0s conversation {conversation_id} received phrase from {caller_id}, generating response for: {request_phrase}")
     response = conversation_manager.get_response(caller_id, conversation_id, request_phrase)
-    print(f"{current_ts()}: {time.time() - t1}s response generated: {response['text']}, {len(response['audio']) if response['audio'] else 0} bytes")
+    print(f"{current_ts()}: {time.time() - t1}s response generated: {response}")
     key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
-    return key, response['audio']
+    return key, response['text']
 
 
 def update_confidence_score(caller_id, conversation_id, confidence_score):
@@ -81,9 +95,9 @@ def update_confidence_score(caller_id, conversation_id, confidence_score):
 
 if __name__ == "__main__":
     # Kafka configuration
-    conversations_topic = "haystack-voice-vishing-ai-conversations"
-    output_topic = "haystack-voice-vishing-ai-output"
-    analysis_topic = "haystack-voice-vishing-ai-analysis"
+    conversations_topic = "monkeyjacket-physician-incoming-transcript"
+    output_topic = "monkeyjacket-patient-outgoing-transcript"
+    #analysis_topic = "haystack-voice-vishing-ai-analysis"
     bootstrap_servers = "pkc-56d1g.eastus.azure.confluent.cloud:9092"
     group_id = "vishing-chat-group"
 
@@ -110,25 +124,15 @@ if __name__ == "__main__":
     j_json_serialization_schema = gate_way \
         .jvm.org.apache.flink.formats.json.JsonSerializationSchema()
 
-    kafka_user = os.environ["KAFKA_GENESYS_CHAT_USER"]
-    kafka_password = os.environ["KAFKA_GENESYS_CHAT_PASSWORD"]
+    #kafka_user = os.environ["KAFKA_GENESYS_CHAT_USER"]
+    #kafka_password = os.environ["KAFKA_GENESYS_CHAT_PASSWORD"]
+
+    kafka_user = "QJ5Z5GX7VUWH5QNU"
+    kafka_password = "7ISfj3Z0R+zGwk25nxl1cv+yHJO9KVnwOwyNlZ2mokmR3M3AR+4eWYXRmVwXY7Kn"
 
     conversations_kafka_source = KafkaSource.builder() \
         .set_bootstrap_servers(bootstrap_servers) \
         .set_topics(conversations_topic) \
-        .set_group_id(group_id) \
-        .set_starting_offsets(KafkaOffsetsInitializer.latest()) \
-        .set_deserializer(BinaryDeserializationSchema(j_deserialization_schema=j_byte_array_deserialization_schema)) \
-        .set_property('security.protocol', 'SASL_SSL') \
-        .set_property('sasl.mechanism', 'PLAIN') \
-        .set_property('sasl.jaas.config',
-                      f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{kafka_user}" password="{kafka_password}";') \
-        .set_property('ssl.ca.location', 'ISRG Root X1.crt') \
-        .build()
-
-    inference_kafka_source = KafkaSource.builder() \
-        .set_bootstrap_servers(bootstrap_servers) \
-        .set_topics(analysis_topic) \
         .set_group_id(group_id) \
         .set_starting_offsets(KafkaOffsetsInitializer.latest()) \
         .set_deserializer(BinaryDeserializationSchema(j_deserialization_schema=j_byte_array_deserialization_schema)) \
@@ -165,14 +169,15 @@ if __name__ == "__main__":
     conversations_ds \
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['type'] == 'open') \
         .key_by(lambda message: json.loads(message['key'].decode('utf-8'))['conversationId'], Types.STRING()) \
-        .map(lambda message: initial_greeting(
+        .map(lambda message: initialize_conversation(
             json.loads(message['key'].decode('utf-8'))['callerId'],
-            json.loads(message['key'].decode('utf-8'))['conversationId'])) \
-        .sink_to(kafka_sink)
+            json.loads(message['key'].decode('utf-8'))['conversationId'],
+            message['value'].decode('utf-8'))) \
+        
 
     # conversations: transcription
     conversations_ds \
-        .filter(lambda message: json.loads(message['key'].decode('utf-8'))['channel'] == 'EXTERNAL') \
+        .filter(lambda message: json.loads(message['key'].decode('utf-8'))['channel'] == 'MONKEY_JACKET') \
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['type'] == 'transcription') \
         .filter(lambda message: message['value'].decode('utf-8') and len(message['value'].decode('utf-8')) > 0) \
         .key_by(lambda message: json.loads(message['key'].decode('utf-8'))['conversationId'], Types.STRING()) \
@@ -181,21 +186,6 @@ if __name__ == "__main__":
             json.loads(message['key'].decode('utf-8'))['conversationId'],
             message['value'].decode('utf-8'))) \
         .sink_to(kafka_sink)
-
-    # inference
-    inference_ds = env.from_source(source=inference_kafka_source,
-                                   watermark_strategy=WatermarkStrategy.no_watermarks(),
-                                   source_name="KafkaSource")
-
-    # analysis: inference
-    inference_ds \
-        .map(lambda message: print('inference message:', message) or message['value'][13:-2].decode('utf-8')) \
-        .filter(lambda value: 'confidenceScore' in json.loads(value)) \
-        .key_by(lambda value: json.loads(value)['conversationId'], Types.STRING()) \
-        .map(lambda value: update_confidence_score(
-            json.loads(value)['speakerId'],
-            json.loads(value)['conversationId'],
-            json.loads(value)['confidenceScore'])) \
 
     print(f'{current_ts()}: starting Flink job')
     env.execute("genesys-chat")
