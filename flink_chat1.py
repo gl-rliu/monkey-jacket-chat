@@ -57,22 +57,21 @@ class KeyValueSerializationSchema(SerializationSchema):
         # Serialize key and value as bytes, separated by a comma (for example)
         return (key.encode('utf-8'), val.encode('utf-8'))
 
-
-def initialize_conversation(caller_id, conversation_id, conversation_context, conversation_manager):
-    print(f"{current_ts()}: 0.000s received call {conversation_id} from {caller_id}: initing convo")
-    convo_context = json.loads(conversation_context)
-    conversation_manager.initialize_conversation(caller_id, conversation_id, convo_context)
-
-def initial_greeting(caller_id, conversation_id,  conversation_manager):
+def initial_greeting(caller_id, conversation_id, conversation_context, conversation_manager):
     t1 = time.time()
     print(f"{current_ts()}: 0.000s received call {conversation_id} from {caller_id}: generating initial greeting")
     # {"text": greeting_text, "audio": bytes}
-    conversation_manager.initialize_conversation()
+    convo_context = json.loads(conversation_context)
+    conversation_manager.initialize_conversation(caller_id, conversation_id, convo_context)
     greeting = conversation_manager.get_initial_greeting(caller_id, conversation_id)
-    print(f"{current_ts()}: {time.time() - t1}s initial greeting and audio generated: {greeting['text']}, {len(greeting['audio']) if greeting['audio'] else 0} bytes")
+    
+    greeting_text = greeting.get('text', '') if greeting is not None else ''
+
+    print(f"{current_ts()}: {time.time() - t1}s initial greeting {greeting_text}")
+    #print(f"{current_ts()}: {time.time() - t1}s initial greeting and audio generated: {greeting['text']}, {len(greeting['audio']) if greeting['audio'] else 0} bytes")
     key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
     # print(f"${time.time() - t1}s initial greeting generated: {greeting['text']}, {len(greeting['audio'])} bytes")
-    return key, greeting['audio']
+    return key, greeting_text
 
 
 def next_response(caller_id, conversation_id, request_phrase,  conversation_manager):
@@ -172,7 +171,7 @@ if __name__ == "__main__":
     conversations_ds \
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['type'] == 'open') \
         .key_by(lambda message: json.loads(message['key'].decode('utf-8'))['conversationId'], Types.STRING()) \
-        .map(lambda message: initialize_conversation(
+        .map(lambda message: initial_greeting(
             json.loads(message['key'].decode('utf-8'))['callerId'],
             json.loads(message['key'].decode('utf-8'))['conversationId'],
             message['value'].decode('utf-8'),
