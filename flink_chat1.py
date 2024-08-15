@@ -130,11 +130,8 @@ if __name__ == "__main__":
     j_json_serialization_schema = gate_way \
         .jvm.org.apache.flink.formats.json.JsonSerializationSchema()
 
-    #kafka_user = os.environ["KAFKA_GENESYS_CHAT_USER"]
-    #kafka_password = os.environ["KAFKA_GENESYS_CHAT_PASSWORD"]
-
-    kafka_user = "QJ5Z5GX7VUWH5QNU"
-    kafka_password = "7ISfj3Z0R+zGwk25nxl1cv+yHJO9KVnwOwyNlZ2mokmR3M3AR+4eWYXRmVwXY7Kn"
+    kafka_user = os.environ["KAFKA_CHAT_USER"]
+    kafka_password = os.environ["KAFKA_CHAT_PASSWORD"]
 
     conversations_kafka_source = KafkaSource.builder() \
         .set_bootstrap_servers(bootstrap_servers) \
