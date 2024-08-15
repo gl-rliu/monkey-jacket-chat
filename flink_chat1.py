@@ -1,12 +1,11 @@
 import sys
-sys.path.append('/Users/richardliu/Documents/Development/monkey_jacket/avatar/monkey-jacket-patient-avatar')
-
-
+import time
+import importlib
 import datetime
 import json
 import os
 import pytz
-import time
+
 
 from pyflink.common import WatermarkStrategy
 from pyflink.common.serialization import DeserializationSchema, SerializationSchema
@@ -20,7 +19,6 @@ from pyflink.java_gateway import get_gateway
 
 
 #import conversation_engines.call_center.conversation_manager as conversation_manager
-import patient_endpoint as conversation_manager
 
 def current_ts():
     now = datetime.datetime.now(pytz.timezone('America/Toronto'))
@@ -60,14 +58,12 @@ class KeyValueSerializationSchema(SerializationSchema):
         return (key.encode('utf-8'), val.encode('utf-8'))
 
 
-def initialize_conversation(caller_id, conversation_id, conversation_context):
+def initialize_conversation(caller_id, conversation_id, conversation_context, conversation_manager):
     print(f"{current_ts()}: 0.000s received call {conversation_id} from {caller_id}: initing convo")
-    
     convo_context = json.loads(conversation_context)
-    
     conversation_manager.initialize_conversation(caller_id, conversation_id, convo_context)
 
-def initial_greeting(caller_id, conversation_id):
+def initial_greeting(caller_id, conversation_id,  conversation_manager):
     t1 = time.time()
     print(f"{current_ts()}: 0.000s received call {conversation_id} from {caller_id}: generating initial greeting")
     # {"text": greeting_text, "audio": bytes}
@@ -79,7 +75,7 @@ def initial_greeting(caller_id, conversation_id):
     return key, greeting['audio']
 
 
-def next_response(caller_id, conversation_id, request_phrase):
+def next_response(caller_id, conversation_id, request_phrase,  conversation_manager):
     t1 = time.time()
     print(f"{current_ts()}: 0.0s conversation {conversation_id} received phrase from {caller_id}, generating response for: {request_phrase}")
     response = conversation_manager.get_response(caller_id, conversation_id, request_phrase)
@@ -88,9 +84,16 @@ def next_response(caller_id, conversation_id, request_phrase):
     return key, response['text']
 
 
-def update_confidence_score(caller_id, conversation_id, confidence_score):
+def update_confidence_score(caller_id, conversation_id, confidence_score,  conversation_manager):
     print(f"{current_ts()}: Updating confidence score of conversation {conversation_id} with caller {caller_id}: {confidence_score}")
     conversation_manager.update_confidence_score(caller_id, conversation_id, confidence_score)
+
+def load_conversation_manager_module(configPath:str):
+    with open(configPath, 'r') as config_file:
+        config = json.load(config_file)
+    sys.path.append(config['dependency_path'])
+    conv_manager_module = importlib.import_module(config['conversation_manager'])
+    return conv_manager_module
 
 
 if __name__ == "__main__":
@@ -103,6 +106,9 @@ if __name__ == "__main__":
 
     env = StreamExecutionEnvironment.get_execution_environment()
     print('Flink parallelism:', env.get_parallelism())
+
+    conversation_manager = load_conversation_manager_module("config/config.json")
+
 
     home_dir = os.path.expanduser('~')
     # env.add_jars(f"file://{home_dir}/.m2/repository/org/apache/flink/flink-connector-kafka/3.1.0-1.18/flink-connector-kafka-3.1.0-1.18.jar")
@@ -172,10 +178,11 @@ if __name__ == "__main__":
         .map(lambda message: initialize_conversation(
             json.loads(message['key'].decode('utf-8'))['callerId'],
             json.loads(message['key'].decode('utf-8'))['conversationId'],
-            message['value'].decode('utf-8'))) \
+            message['value'].decode('utf-8'),
+            conversation_manager)) \
         
 
-    # conversations: transcription
+    #conversations: transcription
     conversations_ds \
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['channel'] == 'MONKEY_JACKET') \
         .filter(lambda message: json.loads(message['key'].decode('utf-8'))['type'] == 'transcription') \
@@ -184,7 +191,8 @@ if __name__ == "__main__":
         .map(lambda message: next_response(
             json.loads(message['key'].decode('utf-8'))['callerId'],
             json.loads(message['key'].decode('utf-8'))['conversationId'],
-            message['value'].decode('utf-8'))) \
+            message['value'].decode('utf-8'),
+            conversation_manager)) \
         .sink_to(kafka_sink)
 
     print(f'{current_ts()}: starting Flink job')
