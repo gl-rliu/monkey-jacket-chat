@@ -4,11 +4,12 @@ import importlib
 import datetime
 import json
 import os
+from httpx import ResponseNotRead
 import pytz
 
 
 from pyflink.common import WatermarkStrategy
-from pyflink.common.serialization import DeserializationSchema, SerializationSchema
+from pyflink.common.serialization import DeserializationSchema, SerializationSchema, SimpleStringSchema
 from pyflink.common.typeinfo import Types
 from pyflink.datastream import StreamExecutionEnvironment
 from pyflink.datastream.connectors import DeliveryGuarantee
@@ -38,6 +39,10 @@ class BinaryDeserializationSchema(DeserializationSchema):
         # Return the type information for the deserialized data
         return Types.PRIMITIVE_ARRAY(Types.BYTE())
 
+class PassthroughSerializationSchema(SerializationSchema):
+    def serialize(self, value):
+        print ('ok')
+        return str(value)
 
 class JsonSerializationSchema(SerializationSchema):
     def serialize(self, value):
@@ -53,6 +58,7 @@ class BytesSerializationSchema(SerializationSchema):
 class KeyValueSerializationSchema(SerializationSchema):
     def serialize(self, value):
         # Assuming `value` is a tuple (key, value)
+        print ('serializing key value......', value)
         key, val = value
         # Serialize key and value as bytes, separated by a comma (for example)
         return (key.encode('utf-8'), val.encode('utf-8'))
@@ -68,20 +74,25 @@ def initial_greeting(caller_id, conversation_id, conversation_context, conversat
     greeting_text = greeting.get('text', '') if greeting is not None else ''
 
     print(f"{current_ts()}: {time.time() - t1}s initial greeting {greeting_text}")
-    #print(f"{current_ts()}: {time.time() - t1}s initial greeting and audio generated: {greeting['text']}, {len(greeting['audio']) if greeting['audio'] else 0} bytes")
-    key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
-    # print(f"${time.time() - t1}s initial greeting generated: {greeting['text']}, {len(greeting['audio'])} bytes")
-    return key, greeting_text
 
+    key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
+    print (key, greeting_text)
+    return key, greeting_text
 
 def next_response(caller_id, conversation_id, request_phrase,  conversation_manager):
     t1 = time.time()
     print(f"{current_ts()}: 0.0s conversation {conversation_id} received phrase from {caller_id}, generating response for: {request_phrase}")
     response = conversation_manager.get_response(caller_id, conversation_id, request_phrase)
     print(f"{current_ts()}: {time.time() - t1}s response generated: {response}")
-    key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
-    return key, response['text']
+    key = json.dumps({'conversationId': conversation_id})
+   
+    output = {}
+    output['key'] = key
+    output['value'] = response['text']
+    
+    output_string = json.dumps(output)
 
+    return output_string
 
 def update_confidence_score(caller_id, conversation_id, confidence_score,  conversation_manager):
     print(f"{current_ts()}: Updating confidence score of conversation {conversation_id} with caller {caller_id}: {confidence_score}")
@@ -128,6 +139,13 @@ if __name__ == "__main__":
         .jvm.studio.goodlabs.vishing.KafkaValueSerializationSchema()
     j_json_serialization_schema = gate_way \
         .jvm.org.apache.flink.formats.json.JsonSerializationSchema()
+    
+    j_json_key_serilization_schema = gate_way \
+        .jvm.studio.goodlabs.vishing.KafkaKeyJsonSerializationSchema()
+    j_json_value_serialization_schema = gate_way \
+        .jvm.studio.goodlabs.vishing.KafkaValueJsonSerializationSchema()
+    
+    
 
     kafka_user = os.environ["KAFKA_CHAT_USER"]
     kafka_password = os.environ["KAFKA_CHAT_PASSWORD"]
@@ -147,8 +165,8 @@ if __name__ == "__main__":
 
     key_value_kafka_serialization_schema = KafkaRecordSerializationSchema.builder() \
         .set_topic(output_topic) \
-        .set_key_serialization_schema(BytesSerializationSchema(j_serialization_schema=j_byte_array_serialization_schema)) \
-        .set_value_serialization_schema(BytesSerializationSchema(j_serialization_schema=j_byte_array_serialization_schema)) \
+        .set_key_serialization_schema(PassthroughSerializationSchema(j_serialization_schema=j_json_key_serilization_schema )) \
+        .set_value_serialization_schema(PassthroughSerializationSchema(j_serialization_schema=j_json_value_serialization_schema)) \
         .build()
 
     kafka_sink = KafkaSink.builder() \
@@ -176,6 +194,7 @@ if __name__ == "__main__":
             json.loads(message['key'].decode('utf-8'))['conversationId'],
             message['value'].decode('utf-8'),
             conversation_manager)) \
+        #.sink_to(kafka_sink)
         
 
     #conversations: transcription
@@ -188,7 +207,7 @@ if __name__ == "__main__":
             json.loads(message['key'].decode('utf-8'))['callerId'],
             json.loads(message['key'].decode('utf-8'))['conversationId'],
             message['value'].decode('utf-8'),
-            conversation_manager)) \
+            conversation_manager), Types.STRING()) \
         .sink_to(kafka_sink)
 
     print(f'{current_ts()}: starting Flink job')
