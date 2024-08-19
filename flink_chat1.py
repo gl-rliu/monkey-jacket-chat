@@ -40,27 +40,8 @@ class BinaryDeserializationSchema(DeserializationSchema):
 
 class PassthroughSerializationSchema(SerializationSchema):
     def serialize(self, value):
-        print ('ok')
         return str(value)
 
-class JsonSerializationSchema(SerializationSchema):
-    def serialize(self, value):
-        return json.dumps(value)
-
-
-class BytesSerializationSchema(SerializationSchema):
-    def serialize(self, value):
-        print('serializer:', value)
-        return str(value)
-
-
-class KeyValueSerializationSchema(SerializationSchema):
-    def serialize(self, value):
-        # Assuming `value` is a tuple (key, value)
-        print ('serializing key value......', value)
-        key, val = value
-        # Serialize key and value as bytes, separated by a comma (for example)
-        return (key.encode('utf-8'), val.encode('utf-8'))
 
 def initial_greeting(caller_id, conversation_id, conversation_context, conversation_manager):
     t1 = time.time()
@@ -121,15 +102,9 @@ if __name__ == "__main__":
     print(f'added jar {jar_path}')
 
     gate_way = get_gateway()
-    j_char_set = gate_way.jvm.java.nio.charset.Charset.forName('UTF-8')
-    j_simple_string_serialization_schema = gate_way \
-        .jvm.org.apache.flink.api.common.serialization.SimpleStringSchema(j_char_set)
+
     j_byte_array_deserialization_schema = gate_way \
         .jvm.studio.goodlabs.vishing.KafkaMapByteArrayDeserializationSchema()
-    j_byte_array_serialization_schema = gate_way \
-        .jvm.studio.goodlabs.vishing.KafkaValueSerializationSchema()
-    j_json_serialization_schema = gate_way \
-        .jvm.org.apache.flink.formats.json.JsonSerializationSchema()
     j_json_key_serilization_schema = gate_way \
         .jvm.studio.goodlabs.vishing.KafkaKeyJsonSerializationSchema()
     j_json_value_serialization_schema = gate_way \
