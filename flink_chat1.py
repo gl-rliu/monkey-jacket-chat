@@ -4,12 +4,11 @@ import importlib
 import datetime
 import json
 import os
-from httpx import ResponseNotRead
 import pytz
 
 
 from pyflink.common import WatermarkStrategy
-from pyflink.common.serialization import DeserializationSchema, SerializationSchema, SimpleStringSchema
+from pyflink.common.serialization import DeserializationSchema, SerializationSchema
 from pyflink.common.typeinfo import Types
 from pyflink.datastream import StreamExecutionEnvironment
 from pyflink.datastream.connectors import DeliveryGuarantee
