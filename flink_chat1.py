@@ -70,29 +70,16 @@ def initial_greeting(caller_id, conversation_id, conversation_context, conversat
     convo_context = json.loads(conversation_context)
     conversation_manager.initialize_conversation(caller_id, conversation_id, convo_context)
     greeting = conversation_manager.get_initial_greeting(caller_id, conversation_id)
-    
-    greeting_text = greeting.get('text', '') if greeting is not None else ''
-
-    print(f"{current_ts()}: {time.time() - t1}s initial greeting {greeting_text}")
-
-    key = json.dumps({'conversationId': conversation_id}).encode('utf-8')
-    print (key, greeting_text)
-    return key, greeting_text
+ 
+    return format_response_for_serialization(conversation_id, greeting)
 
 def next_response(caller_id, conversation_id, request_phrase,  conversation_manager):
     t1 = time.time()
     print(f"{current_ts()}: 0.0s conversation {conversation_id} received phrase from {caller_id}, generating response for: {request_phrase}")
     response = conversation_manager.get_response(caller_id, conversation_id, request_phrase)
     print(f"{current_ts()}: {time.time() - t1}s response generated: {response}")
-    key = json.dumps({'conversationId': conversation_id})
-   
-    output = {}
-    output['key'] = key
-    output['value'] = response['text']
-    
-    output_string = json.dumps(output)
 
-    return output_string
+    return format_response_for_serialization(conversation_id, response)
 
 def update_confidence_score(caller_id, conversation_id, confidence_score,  conversation_manager):
     print(f"{current_ts()}: Updating confidence score of conversation {conversation_id} with caller {caller_id}: {confidence_score}")
@@ -104,6 +91,12 @@ def load_conversation_manager_module(configPath:str):
     sys.path.append(config['dependency_path'])
     conv_manager_module = importlib.import_module(config['conversation_manager'])
     return conv_manager_module
+
+def format_response_for_serialization(conversation_id, greeting):
+
+    greeting_text = greeting.get('text', '') if greeting is not None else []
+    key = json.dumps({'conversationId': conversation_id})
+    return json.dumps({'key': key, 'value': greeting_text})
 
 
 if __name__ == "__main__":
@@ -139,7 +132,6 @@ if __name__ == "__main__":
         .jvm.studio.goodlabs.vishing.KafkaValueSerializationSchema()
     j_json_serialization_schema = gate_way \
         .jvm.org.apache.flink.formats.json.JsonSerializationSchema()
-    
     j_json_key_serilization_schema = gate_way \
         .jvm.studio.goodlabs.vishing.KafkaKeyJsonSerializationSchema()
     j_json_value_serialization_schema = gate_way \
@@ -193,8 +185,8 @@ if __name__ == "__main__":
             json.loads(message['key'].decode('utf-8'))['callerId'],
             json.loads(message['key'].decode('utf-8'))['conversationId'],
             message['value'].decode('utf-8'),
-            conversation_manager)) \
-        #.sink_to(kafka_sink)
+            conversation_manager), Types.STRING()) \
+        .sink_to(kafka_sink)
         
 
     #conversations: transcription
