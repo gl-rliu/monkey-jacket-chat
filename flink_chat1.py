@@ -65,12 +65,9 @@ def update_confidence_score(caller_id, conversation_id, confidence_score,  conve
     print(f"{current_ts()}: Updating confidence score of conversation {conversation_id} with caller {caller_id}: {confidence_score}")
     conversation_manager.update_confidence_score(caller_id, conversation_id, confidence_score)
 
-def load_conversation_manager_module(configPath:str):
-    with open(configPath, 'r') as config_file:
-        config = json.load(config_file)
-    sys.path.append(config['dependency_path'])
-    conv_manager_module = importlib.import_module(config['conversation_manager'])
-    return conv_manager_module
+def load_conversation_manager_module(conversation_module):
+    return importlib.import_module(conversation_module)
+
 
 def format_response_for_serialization(conversation_id, greeting):
     greeting_text = greeting.get('text', '') if greeting is not None else []
@@ -88,7 +85,8 @@ if __name__ == "__main__":
     env = StreamExecutionEnvironment.get_execution_environment()
     print('Flink parallelism:', env.get_parallelism())
 
-    conversation_manager = load_conversation_manager_module("config/config.json")
+    conversation_module = os.getenv("CONVERSATION_MODLE", default = "patient_endpoint")
+    conversation_manager = load_conversation_manager_module(conversation_module)
 
 
     home_dir = os.path.expanduser('~')
