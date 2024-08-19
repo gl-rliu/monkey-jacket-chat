@@ -82,9 +82,8 @@ if __name__ == "__main__":
     # Kafka configuration
     conversations_topic = "monkeyjacket-physician-incoming-transcript"
     output_topic = "monkeyjacket-patient-outgoing-transcript"
-    #analysis_topic = "haystack-voice-vishing-ai-analysis"
     bootstrap_servers = "pkc-56d1g.eastus.azure.confluent.cloud:9092"
-    group_id = "vishing-chat-group"
+    group_id = "monkey-jacket-group"
 
     env = StreamExecutionEnvironment.get_execution_environment()
     print('Flink parallelism:', env.get_parallelism())
