@@ -93,7 +93,6 @@ def load_conversation_manager_module(configPath:str):
     return conv_manager_module
 
 def format_response_for_serialization(conversation_id, greeting):
-
     greeting_text = greeting.get('text', '') if greeting is not None else []
     key = json.dumps({'conversationId': conversation_id})
     return json.dumps({'key': key, 'value': greeting_text})
