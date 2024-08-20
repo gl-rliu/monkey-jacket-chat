@@ -70,7 +70,7 @@ def load_conversation_manager_module(conversation_module):
 
 
 def format_response_for_serialization(conversation_id, response):
-    response_text = response.get('text', '') if response is not None and response['text'] else []
+    response_text = response.get('text', '') if response is not None and response and response['text'] else []
     key = json.dumps({'conversationId': conversation_id})
 
     return json.dumps({'key': key, 'value': response_text})
