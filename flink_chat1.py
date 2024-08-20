@@ -61,10 +61,6 @@ def next_response(caller_id, conversation_id, request_phrase,  conversation_mana
 
     return format_response_for_serialization(conversation_id, response)
 
-def update_confidence_score(caller_id, conversation_id, confidence_score,  conversation_manager):
-    print(f"{current_ts()}: Updating confidence score of conversation {conversation_id} with caller {caller_id}: {confidence_score}")
-    conversation_manager.update_confidence_score(caller_id, conversation_id, confidence_score)
-
 def load_conversation_manager_module(conversation_module):
     return importlib.import_module(conversation_module)
 
