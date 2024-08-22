@@ -1,4 +1,3 @@
-import sys
 import time
 import importlib
 import datetime
@@ -91,8 +90,9 @@ if __name__ == "__main__":
     # env.add_jars(f"file://{home_dir}/.m2/repository/org/apache/kafka/kafka-clients/3.3.1/kafka-clients-3.3.1.jar")
     working_dir = os.getcwd()
     # env.add_jars(f"file://{home_path}/GoodLabs/GMM_voiceID/java/target/gmm-flink-java-1.0-SNAPSHOT.jar")
-    jar_path = f"file://{working_dir}/java/target/gmm-flink-java-1.0-SNAPSHOT.jar"
-    env.add_jars(jar_path)
+    
+    jar_path = os.getenv("JAR_DEPENDENCY_PATH")
+    env.add_jars(f"file://{jar_path}")
     print(f'added jar {jar_path}')
 
     gate_way = get_gateway()
