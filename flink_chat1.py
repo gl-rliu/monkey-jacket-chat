@@ -1,3 +1,4 @@
+
 import time
 import importlib
 import datetime
@@ -42,19 +43,21 @@ class PassthroughSerializationSchema(SerializationSchema):
         return str(value)
 
 
-def initial_greeting(caller_id, conversation_id, conversation_context, conversation_manager):
+def initial_greeting(caller_id, conversation_id, conversation_module, conversation_context):
     t1 = time.time()
     print(f"{current_ts()}: 0.000s received call {conversation_id} from {caller_id}: generating initial greeting")
     # {"text": greeting_text, "audio": bytes}
     convo_context = json.loads(conversation_context)
+    conversation_manager = load_conversation_manager_module(conversation_module)
     conversation_manager.initialize_conversation(caller_id, conversation_id, convo_context)
     greeting = conversation_manager.get_initial_greeting(caller_id, conversation_id)
  
     return format_response_for_serialization(conversation_id, greeting)
 
-def next_response(caller_id, conversation_id, request_phrase,  conversation_manager):
+def next_response(caller_id, conversation_id, conversation_module, request_phrase):
     t1 = time.time()
     print(f"{current_ts()}: 0.0s conversation {conversation_id} received phrase from {caller_id}, generating response for: {request_phrase}")
+    conversation_manager = load_conversation_manager_module(conversation_module)
     response = conversation_manager.get_response(caller_id, conversation_id, request_phrase)
     print(f"{current_ts()}: {time.time() - t1}s response generated: {response}")
 
@@ -67,7 +70,6 @@ def load_conversation_manager_module(conversation_module):
 def format_response_for_serialization(conversation_id, response):
     response_text = response.get('text', '') if response is not None and response and response['text'] else []
     key = json.dumps({'conversationId': conversation_id})
-
     return json.dumps({'key': key, 'value': response_text})
 
 
@@ -81,10 +83,8 @@ if __name__ == "__main__":
     env = StreamExecutionEnvironment.get_execution_environment()
     print('Flink parallelism:', env.get_parallelism())
 
-    conversation_module = os.getenv("CONVERSATION_MODLE", default = "patient_endpoint")
-    conversation_manager = load_conversation_manager_module(conversation_module)
-
-
+    conversation_module_default = "patient_endpoint"
+   
     home_dir = os.path.expanduser('~')
     # env.add_jars(f"file://{home_dir}/.m2/repository/org/apache/flink/flink-connector-kafka/3.1.0-1.18/flink-connector-kafka-3.1.0-1.18.jar")
     # env.add_jars(f"file://{home_dir}/.m2/repository/org/apache/kafka/kafka-clients/3.3.1/kafka-clients-3.3.1.jar")
@@ -121,6 +121,7 @@ if __name__ == "__main__":
                       f'org.apache.kafka.common.security.plain.PlainLoginModule required username="{kafka_user}" password="{kafka_password}";') \
         .set_property('ssl.ca.location', 'ISRG Root X1.crt') \
         .build()
+    
 
     key_value_kafka_serialization_schema = KafkaRecordSerializationSchema.builder() \
         .set_topic(output_topic) \
@@ -151,8 +152,9 @@ if __name__ == "__main__":
         .map(lambda message: initial_greeting(
             json.loads(message['key'].decode('utf-8'))['callerId'],
             json.loads(message['key'].decode('utf-8'))['conversationId'],
-            message['value'].decode('utf-8'),
-            conversation_manager), Types.STRING()) \
+            json.loads(message['key'].decode('utf-8')).get('conversation_module', conversation_module_default),
+            message['value'].decode('utf-8')),
+            Types.STRING()) \
         .sink_to(kafka_sink)
         
 
@@ -165,8 +167,9 @@ if __name__ == "__main__":
         .map(lambda message: next_response(
             json.loads(message['key'].decode('utf-8'))['callerId'],
             json.loads(message['key'].decode('utf-8'))['conversationId'],
-            message['value'].decode('utf-8'),
-            conversation_manager), Types.STRING()) \
+            json.loads(message['key'].decode('utf-8')).get('conversation_module', conversation_module_default),
+            message['value'].decode('utf-8')),
+            Types.STRING()) \
         .sink_to(kafka_sink)
 
     print(f'{current_ts()}: starting Flink job')
