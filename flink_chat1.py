@@ -75,22 +75,16 @@ def format_response_for_serialization(conversation_id, response):
 
 if __name__ == "__main__":
     # Kafka configuration
-    conversations_topic = "monkeyjacket-physician-incoming-transcript"
-    output_topic = "monkeyjacket-patient-outgoing-transcript"
-    bootstrap_servers = "pkc-56d1g.eastus.azure.confluent.cloud:9092"
-    group_id = "monkey-jacket-group"
+    conversations_topic = os.getenv("CONVERSATION_TOPIC_AUDIO_TOPIC") 
+    output_topic =  os.getenv("PATIENT_TRANSCRIPT_OUTPUT_TOPIC")
+    bootstrap_servers =  os.getenv("KAFKA_BOOTSTRAP_SERVER") 
+    group_id =  os.getenv("CONVERSATION_ENGINE_GROUP_ID")
 
     env = StreamExecutionEnvironment.get_execution_environment()
     print('Flink parallelism:', env.get_parallelism())
 
     conversation_module_default = "patient_endpoint"
    
-    home_dir = os.path.expanduser('~')
-    # env.add_jars(f"file://{home_dir}/.m2/repository/org/apache/flink/flink-connector-kafka/3.1.0-1.18/flink-connector-kafka-3.1.0-1.18.jar")
-    # env.add_jars(f"file://{home_dir}/.m2/repository/org/apache/kafka/kafka-clients/3.3.1/kafka-clients-3.3.1.jar")
-    working_dir = os.getcwd()
-    # env.add_jars(f"file://{home_path}/GoodLabs/GMM_voiceID/java/target/gmm-flink-java-1.0-SNAPSHOT.jar")
-    
     jar_path = os.getenv("JAR_DEPENDENCY_PATH")
     env.add_jars(f"file://{jar_path}")
     print(f'added jar {jar_path}')
