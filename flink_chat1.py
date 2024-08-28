@@ -75,7 +75,7 @@ def format_response_for_serialization(conversation_id, response):
 
 if __name__ == "__main__":
     # Kafka configuration
-    conversations_topic = os.getenv("CONVERSATION_TOPIC_AUDIO_TOPIC") 
+    conversations_topic = os.getenv("PHYSICIAN_TRANSCRIPT_TOPIC") 
     output_topic =  os.getenv("PATIENT_TRANSCRIPT_OUTPUT_TOPIC")
     bootstrap_servers =  os.getenv("KAFKA_BOOTSTRAP_SERVER") 
     group_id =  os.getenv("CONVERSATION_ENGINE_GROUP_ID")
