@@ -17,9 +17,6 @@ from pyflink.datastream.connectors.kafka import KafkaSource, \
 from pyflink.java_gateway import get_gateway
 
 
-
-#import conversation_engines.call_center.conversation_manager as conversation_manager
-
 def current_ts():
     now = datetime.datetime.now(pytz.timezone('America/Toronto'))
     return now.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
