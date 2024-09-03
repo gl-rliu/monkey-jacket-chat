@@ -3,7 +3,10 @@
 Compile dependency:
 
 cd /java
+
+
 mvn clean install
+
 
 Need to pull monkey-jacket-avatar code at:
 https://github.com/goodlabs-studio/monkey-jacket-patient-avatar
