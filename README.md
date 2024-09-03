@@ -17,23 +17,21 @@ and install dependencies in requirement.txt for that project
 
 
 #### Needed environment variables
-- export OPENAI_API_KEY='openai api_key'
-- export XI_API_KEY='genesys api_key'
 
-export MONKEY_JACKET_AVATAR_BASE_PATH=<path_to_monkey_jacket_avatar_module_on_file_system>
-export PYTHONPATH="${PYTHONPATH}:/${MONKEY_JACKET_AVATAR_BASE_PATH}"
 
-### JAR_DEPENDENCY PATH SHOULD POINT AT: ./java/target/flink-serializers-1.0-SNAPSHOT.jar
-export JAR_DEPENDENCY_PATH=<> 
-export OPENAI_API_KEY="<>"
+- export MONKEY_JACKET_AVATAR_BASE_PATH=<path_to_monkey_jacket_avatar_module_on_file_system>
+- export PYTHONPATH="${PYTHONPATH}:/${MONKEY_JACKET_AVATAR_BASE_PATH}"
 
-export PHYSICIAN_TRANSCRIPT_TOPIC="monkeyjacket-physician-incoming-transcript"
-export PATIENT_TRANSCRIPT_OUTPUT_TOPIC="monkeyjacket-patient-outgoing-transcript"
-export KAFKA_BOOTSTRAP_SERVER="pkc-56d1g.eastus.azure.confluent.cloud:9092"
-export CONVERSATION_ENGINE_GROUP_ID=“monkey-jacket-group”
-export PATIENT_TRANSCRIPT_OUTPUT_TOPIC="monkeyjacket-patient-outgoing-transcript"
-export KAFKA_CHAT_USER="<>"
-export KAFKA_CHAT_PASSWORD="<>"
+- export JAR_DEPENDENCY_PATH=<./java/target/flink-serializers-1.0-SNAPSHOT.jar> 
+- export OPENAI_API_KEY="openai api_key"
+
+- export PHYSICIAN_TRANSCRIPT_TOPIC="monkeyjacket-physician-incoming-transcript"
+- export PATIENT_TRANSCRIPT_OUTPUT_TOPIC="monkeyjacket-patient-outgoing-transcript"
+- export KAFKA_BOOTSTRAP_SERVER="pkc-56d1g.eastus.azure.confluent.cloud:9092"
+- export CONVERSATION_ENGINE_GROUP_ID=“monkey-jacket-group”
+- export PATIENT_TRANSCRIPT_OUTPUT_TOPIC="monkeyjacket-patient-outgoing-transcript"
+- export KAFKA_CHAT_USER="<>"
+- export KAFKA_CHAT_PASSWORD="<>"
 
 
 ### Need to patch ####
