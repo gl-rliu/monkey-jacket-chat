@@ -92,11 +92,11 @@ if __name__ == "__main__":
     gate_way = get_gateway()
 
     j_byte_array_deserialization_schema = gate_way \
-        .jvm.studio.goodlabs.vishing.KafkaMapByteArrayDeserializationSchema()
+        .jvm.studio.goodlabs.monkeyjacket.KafkaMapByteArrayDeserializationSchema()
     j_json_key_serilization_schema = gate_way \
-        .jvm.studio.goodlabs.vishing.KafkaKeyJsonSerializationSchema()
+        .jvm.studio.goodlabs.monkeyjacket.KafkaKeyJsonSerializationSchema()
     j_json_value_serialization_schema = gate_way \
-        .jvm.studio.goodlabs.vishing.KafkaValueJsonSerializationSchema()
+        .jvm.studio.goodlabs.monkeyjacket.KafkaValueJsonSerializationSchema()
     
     
 
