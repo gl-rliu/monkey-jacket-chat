@@ -2,7 +2,7 @@
 
 Compile dependency:
 
-cd /java
+cd <monkey-jacket-chat_base_dir>/java
 
 
 mvn clean install
