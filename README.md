@@ -1,44 +1,53 @@
-# genesys-chat
+# monkey-jacket-chat
+
+Compile dependency:
+
+cd /java
+mvn clean install
+
+Need to pull monkey-jacket-avatar code at:
+https://github.com/goodlabs-studio/monkey-jacket-patient-avatar
+
+and install dependencies in requirement.txt for that project
 
 ## Run
 
-    cd ~/GoodLabs/genesys-chat
     source venv/bin/activate
     python3 flink_chat1.py
 
 
-#### Add API Key to environment
+#### Needed environment variables
 - export OPENAI_API_KEY='openai api_key'
 - export XI_API_KEY='genesys api_key'
 
-## OpenAI Text Response Generator
+export MONKEY_JACKET_AVATAR_BASE_PATH=<path_to_monkey_jacket_avatar_module_on_file_system>
+export PYTHONPATH="${PYTHONPATH}:/${MONKEY_JACKET_AVATAR_BASE_PATH}"
 
-Several responses are available that cover the various conversation states
-### character_dialog usage
-get_question_response("arnold shwartzenegger", "homer simpson", "are you in movies?")
+### JAR_DEPENDENCY PATH SHOULD POINT AT: ./java/target/flink-serializers-1.0-SNAPSHOT.jar
+export JAR_DEPENDENCY_PATH=<> 
+export OPENAI_API_KEY="<>"
 
-- returns character response:  e.g. D'oh! Yeah, you might have seen my mug on the big screen now and then. I do a little acting here and there, nothing too fancy!
+export PHYSICIAN_TRANSCRIPT_TOPIC="monkeyjacket-physician-incoming-transcript"
+export PATIENT_TRANSCRIPT_OUTPUT_TOPIC="monkeyjacket-patient-outgoing-transcript"
+export KAFKA_BOOTSTRAP_SERVER="pkc-56d1g.eastus.azure.confluent.cloud:9092"
+export CONVERSATION_ENGINE_GROUP_ID=“monkey-jacket-group”
+export PATIENT_TRANSCRIPT_OUTPUT_TOPIC="monkeyjacket-patient-outgoing-transcript"
+export KAFKA_CHAT_USER="<>"
+export KAFKA_CHAT_PASSWORD="<>"
 
 
-## ElevenLabs text-to-speech
-### audio generator usage
+### Need to patch ####
 
-#### Greetings
-get_greeting_audio("homer simpson", "d'oh!  You had better bring doughnuts next time.")
-- returns byte[] of mu-law PCM encoded audio
+add following method:
 
-#### Regular chat responses
-get_response_audio("arnold schwartzenegger", "Who is your daddy and what does he do?")
-- returns byte[] of mu-law PCM encoded audio
+    def set_deserializer(self, deserialization_schema: DeserializationSchema) \
+        -> 'KafkaSourceBuilder':
+        self._j_builder.setDeserializer(deserialization_schema._j_deserialization_schema)
+        return self
 
-### Available characters
-- arnold schwartzenegger
-- elmer fudd
-- miss piggy
-- scarlett johansson
-- crash the turtle
-- yoda
-- morgan freeman
-- super mario
-- hussain jaber
-- homer simpson
+
+to /pyflink/datastream/connectors/kafka.py
+
+in order for deserializers to work properly
+
+## 
