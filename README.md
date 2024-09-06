@@ -24,9 +24,9 @@ and install dependencies in requirement.txt for that project
 
 - export MONKEY_JACKET_AVATAR_BASE_PATH=<path_to_monkey_jacket_avatar_module_on_file_system>
 - export PYTHONPATH="${PYTHONPATH}:/${MONKEY_JACKET_AVATAR_BASE_PATH}"
-
-- export JAR_DEPENDENCY_PATH=<./java/target/flink-serializers-1.0-SNAPSHOT.jar> 
-- export OPENAI_API_KEY="openai api_key"
+  
+- export JAR_DEPENDENCY_PATH=< ./java/target/flink-serializers-1.0-SNAPSHOT.jar >  
+- export OPENAI_API_KEY=<openai api_key>
 
 - export PHYSICIAN_TRANSCRIPT_TOPIC="monkeyjacket-physician-incoming-transcript"
 - export PATIENT_TRANSCRIPT_OUTPUT_TOPIC="monkeyjacket-patient-outgoing-transcript"
